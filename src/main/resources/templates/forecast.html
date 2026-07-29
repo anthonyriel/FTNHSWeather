@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advance Weather Forecast - FTNHS Weather Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- Navbar with Public Link -->
+    <nav class="navbar navbar-dark bg-dark shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-cloud-rain-fill text-info me-2"></i> FTNHS Weather Hub
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="/" class="btn btn-outline-light btn-sm fw-bold me-3">
+                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+                
+                <!-- Admin Login / Logout Actions -->
+                <div th:unless="${isAdminLoggedIn}">
+                    <a href="/login" class="btn btn-outline-warning btn-sm fw-bold">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Admin Login
+                    </a>
+                </div>
+                <div th:if="${isAdminLoggedIn}" class="d-flex align-items-center">
+                    <span class="text-white small me-3">
+                        <i class="bi bi-person-circle text-info me-1"></i> <strong th:text="${session.adminName}">Admin</strong>
+                    </span>
+                    <form action="/logout" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-sm fw-bold">
+                            <i class="bi bi-box-arrow-right me-1"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0 bg-white">
+                    <div class="card-body p-4">
+                        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-calendar3 text-primary me-2"></i> Hourly Advance Forecast</h2>
+                        <p class="text-muted mb-0">Inspect upcoming weather conditions and simulated class modes hour-by-hour for planning and forecasting.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Controls Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-3">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-4">
+                        <label for="dateFilter" class="form-label small fw-bold text-muted mb-1">Filter by Date</label>
+                        <input type="date" id="dateFilter" class="form-control form-control-sm" onchange="filterForecast()">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="timeFilter" class="form-label small fw-bold text-muted mb-1">Filter by Hour</label>
+                        <select id="timeFilter" class="form-select form-select-sm" onchange="filterForecast()">
+                            <option value="" selected>All Hours (12:00 AM - 11:00 PM)</option>
+                            <option value="12:00 AM">12:00 AM (00:00)</option>
+                            <option value="01:00 AM">01:00 AM (01:00)</option>
+                            <option value="02:00 AM">02:00 AM (02:00)</option>
+                            <option value="03:00 AM">03:00 AM (03:00)</option>
+                            <option value="04:00 AM">04:00 AM (04:00)</option>
+                            <option value="05:00 AM">05:00 AM (05:00)</option>
+                            <option value="06:00 AM">06:00 AM (06:00)</option>
+                            <option value="07:00 AM">07:00 AM (07:00)</option>
+                            <option value="08:00 AM">08:00 AM (08:00)</option>
+                            <option value="09:00 AM">09:00 AM (09:00)</option>
+                            <option value="10:00 AM">10:00 AM (10:00)</option>
+                            <option value="11:00 AM">11:00 AM (11:00)</option>
+                            <option value="12:00 PM">12:00 PM (12:00)</option>
+                            <option value="01:00 PM">01:00 PM (13:00)</option>
+                            <option value="02:00 PM">02:00 PM (14:00)</option>
+                            <option value="03:00 PM">03:00 PM (15:00)</option>
+                            <option value="04:00 PM">04:00 PM (16:00)</option>
+                            <option value="05:00 PM">05:00 PM (17:00)</option>
+                            <option value="06:00 PM">06:00 PM (18:00)</option>
+                            <option value="07:00 PM">07:00 PM (19:00)</option>
+                            <option value="08:00 PM">08:00 PM (20:00)</option>
+                            <option value="09:00 PM">09:00 PM (21:00)</option>
+                            <option value="10:00 PM">10:00 PM (22:00)</option>
+                            <option value="11:00 PM">11:00 PM (23:00)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted mb-1 d-block">&nbsp;</label>
+                        <button class="btn btn-outline-secondary btn-sm w-100" onclick="resetFilters()">
+                            <i class="bi bi-x-circle me-1"></i> Reset Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forecast Table Card -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th class="py-3 ps-4">Date & Time</th>
+                                <th class="py-3">Temperature</th>
+                                <th class="py-3">Precipitation</th>
+                                <th class="py-3">Wind Speed</th>
+                                <th class="py-3 pe-4">Estimated Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="forecastTableBody">
+                            <tr th:each="time, iterStat : ${hourlyTimes}">
+                                <td class="ps-4 fw-bold text-secondary forecast-time" th:text="${time}">2026-07-29T00:00</td>
+                                <td>
+                                    <span class="fw-semibold" th:text="${hourlyTemps[iterStat.index]} + ' &deg;C'">0.0 °C</span>
+                                </td>
+                                <td>
+                                    <span th:text="${hourlyPrecip[iterStat.index]} + ' mm/hr'">0.0 mm/hr</span>
+                                </td>
+                                <td>
+                                    <span th:text="${hourlyWind[iterStat.index]} + ' km/h'">0.0 km/h</span>
+                                </td>
+                                <td class="pe-4">
+                                    <span th:if="${hourlyPrecip[iterStat.index] > 15.0}" class="badge bg-danger">SUSPENDED</span>
+                                    <span th:if="${hourlyPrecip[iterStat.index] >= 2.5 and hourlyPrecip[iterStat.index] <= 15.0}" class="badge bg-warning text-dark">MODULAR</span>
+                                    <span th:if="${hourlyPrecip[iterStat.index] < 2.5}" class="badge bg-success">IN_PERSON</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Format ISO string to 12-hour format with space on page load & filter logic -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const timeCells = document.querySelectorAll('.forecast-time');
+            timeCells.forEach(cell => {
+                const rawIso = cell.textContent.trim();
+                if (rawIso.includes('T')) {
+                    const parts = rawIso.split('T');
+                    const datePart = parts[0];
+                    const timePart = parts[1];
+                    
+                    const hourMin = timePart.split(':');
+                    let hour = parseInt(hourMin[0], 10);
+                    const minute = hourMin[1] || '00';
+                    
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    hour = hour % 12;
+                    hour = hour ? hour : 12;
+                    const formattedHour = hour < 10 ? '0' + hour : hour;
+                    
+                    cell.textContent = `${datePart} ${formattedHour}:${minute} ${ampm}`;
+                }
+            });
+        });
+
+        function filterForecast() {
+            const dateVal = document.getElementById('dateFilter').value;
+            const timeVal = document.getElementById('timeFilter').value;
+            
+            const rows = document.querySelectorAll('#forecastTableBody tr');
+            
+            rows.forEach(row => {
+                const cellText = row.cells[0].textContent;
+                
+                let matchesDate = true;
+                let matchesTime = true;
+                
+                if (dateVal) {
+                    matchesDate = cellText.includes(dateVal);
+                }
+                if (timeVal) {
+                    matchesTime = cellText.includes(timeVal);
+                }
+                
+                if (matchesDate && matchesTime) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        function resetFilters() {
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('timeFilter').value = '';
+            filterForecast();
+        }
+    </script>
+</body>
+</html>

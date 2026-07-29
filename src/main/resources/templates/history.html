@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather History & Logs - FTNHS Weather Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-cloud-rain-fill text-info me-2"></i> FTNHS Weather Hub
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="/" class="btn btn-outline-light btn-sm fw-bold me-2">
+                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+                <a href="/forecast" class="btn btn-outline-info btn-sm fw-bold me-3">
+                    <i class="bi bi-calendar-range me-1"></i> Forecast
+                </a>
+                
+                <!-- Admin Login / Logout Actions -->
+                <div th:unless="${isAdminLoggedIn}">
+                    <a href="/login" class="btn btn-outline-warning btn-sm fw-bold">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Admin Login
+                    </a>
+                </div>
+                <div th:if="${isAdminLoggedIn}" class="d-flex align-items-center">
+                    <span class="text-white small me-3">
+                        <i class="bi bi-person-circle text-info me-1"></i> <strong th:text="${session.adminName}">Admin</strong>
+                    </span>
+                    <form action="/logout" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-sm fw-bold">
+                            <i class="bi bi-box-arrow-right me-1"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0 bg-white">
+                    <div class="card-body p-4">
+                        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-clock-history text-primary me-2"></i> Past Weather Logs History</h2>
+                        <p class="text-muted mb-0">Review archived weather records saved by the system. Use the range filters below to inspect specific periods.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Controls Card (Date From-To & Time From-To) -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-3">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3">
+                        <label for="dateFrom" class="form-label small fw-bold text-muted mb-1">Date From</label>
+                        <input type="date" id="dateFrom" class="form-control form-control-sm" onchange="filterHistory()">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateTo" class="form-label small fw-bold text-muted mb-1">Date To</label>
+                        <input type="date" id="dateTo" class="form-control form-control-sm" onchange="filterHistory()">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="timeFrom" class="form-label small fw-bold text-muted mb-1">Time From</label>
+                        <input type="time" id="timeFrom" class="form-control form-control-sm" onchange="filterHistory()">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="timeTo" class="form-label small fw-bold text-muted mb-1">Time To</label>
+                        <input type="time" id="timeTo" class="form-control form-control-sm" onchange="filterHistory()">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1 d-block">&nbsp;</label>
+                        <button class="btn btn-outline-secondary btn-sm w-100" onclick="resetFilters()">
+                            <i class="bi bi-x-circle me-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Table Card -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th class="py-3 ps-4">Timestamp</th>
+                                <th class="py-3">Location</th>
+                                <th class="py-3">Temperature</th>
+                                <th class="py-3">Precipitation</th>
+                                <th class="py-3">Wind Speed</th>
+                                <th class="py-3 pe-4">Recorded Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr th:each="log : ${weatherLogs}">
+                                <td class="ps-4 fw-bold text-secondary log-timestamp" 
+                                    th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm')}">2026-07-29 22:45</td>
+                                <td th:text="${log.location}">School Campus - Main</td>
+                                <td>
+                                    <span class="fw-semibold" th:text="${log.temperature != null ? log.temperature : '0.0'} + ' &deg;C'">0.0 °C</span>
+                                </td>
+                                <td>
+                                    <span th:text="${log.precipitationMm} + ' mm/hr'">0.0 mm/hr</span>
+                                </td>
+                                <td>
+                                    <span th:text="${log.windSpeed != null ? log.windSpeed : '0.0'} + ' km/h'">0.0 km/h</span>
+                                </td>
+                                <td class="pe-4">
+                                    <span th:if="${log.weatherCondition == 'SUSPENDED'}" class="badge bg-danger">SUSPENDED</span>
+                                    <span th:if="${log.weatherCondition == 'MODULAR'}" class="badge bg-warning text-dark">MODULAR</span>
+                                    <span th:if="${log.weatherCondition == 'IN_PERSON'}" class="badge bg-success">IN_PERSON</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(weatherLogs)}">
+                                <td colspan="6" class="text-center py-4 text-muted">No past weather logs found in the database yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Range Filtering Script -->
+    <script>
+        function filterHistory() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const timeFrom = document.getElementById('timeFrom').value;
+            const timeTo = document.getElementById('timeTo').value;
+            
+            const rows = document.querySelectorAll('#historyTableBody tr');
+            
+            rows.forEach(row => {
+                const timestampCell = row.querySelector('.log-timestamp');
+                if (!timestampCell) return;
+                
+                const fullText = timestampCell.textContent.trim();
+                const parts = fullText.split(' ');
+                const rowDate = parts[0];
+                const rowTime = parts[1];
+                
+                let showRow = true;
+                
+                if (dateFrom && rowDate < dateFrom) {
+                    showRow = false;
+                }
+                if (dateTo && rowDate > dateTo) {
+                    showRow = false;
+                }
+                if (timeFrom && rowTime < timeFrom) {
+                    showRow = false;
+                }
+                if (timeTo && rowTime > timeTo) {
+                    showRow = false;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+        
+        function resetFilters() {
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('timeFrom').value = '';
+            document.getElementById('timeTo').value = '';
+            filterHistory();
+        }
+    </script>
+</body>
+</html>
