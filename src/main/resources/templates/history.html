@@ -102,8 +102,10 @@
                         </thead>
                         <tbody id="historyTableBody">
                             <tr th:each="log : ${weatherLogs}">
-                                <td class="ps-4 fw-bold text-secondary log-timestamp" 
-                                    th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm')}">2026-07-29 22:45</td>
+                                <td class="ps-4 fw-bold text-secondary log-timestamp"
+                                    th:data-date="${#temporals.format(log.timestamp, 'yyyy-MM-dd')}"
+                                    th:data-time="${#temporals.format(log.timestamp, 'HH:mm')}"
+                                    th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd hh:mm a')}">2026-07-29 10:45 PM</td>
                                 <td th:text="${log.location}">School Campus - Main</td>
                                 <td>
                                     <span class="fw-semibold" th:text="${log.temperature != null ? log.temperature : '0.0'} + ' &deg;C'">0.0 °C</span>
@@ -146,10 +148,9 @@
                 const timestampCell = row.querySelector('.log-timestamp');
                 if (!timestampCell) return;
                 
-                const fullText = timestampCell.textContent.trim();
-                const parts = fullText.split(' ');
-                const rowDate = parts[0];
-                const rowTime = parts[1];
+                // Read 24-hour ISO values from data attributes for reliable JS comparison
+                const rowDate = timestampCell.dataset.date;
+                const rowTime = timestampCell.dataset.time;
                 
                 let showRow = true;
                 

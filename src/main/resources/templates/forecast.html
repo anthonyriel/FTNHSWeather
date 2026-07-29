@@ -128,8 +128,8 @@
                                 </td>
                                 <td class="pe-4">
                                     <span th:if="${hourlyPrecip[iterStat.index] > 15.0}" class="badge bg-danger">SUSPENDED</span>
-                                    <span th:if="${hourlyPrecip[iterStat.index] >= 2.5 and hourlyPrecip[iterStat.index] <= 15.0}" class="badge bg-warning text-dark">MODULAR</span>
-                                    <span th:if="${hourlyPrecip[iterStat.index] < 2.5}" class="badge bg-success">IN_PERSON</span>
+                                    <span th:if="${hourlyPrecip[iterStat.index] >= 7.5 and hourlyPrecip[iterStat.index] <= 15.0}" class="badge bg-warning text-dark">MODULAR</span>
+                                    <span th:if="${hourlyPrecip[iterStat.index] < 7.5}" class="badge bg-success">IN_PERSON</span>
                                 </td>
                             </tr>
                         </tbody>
