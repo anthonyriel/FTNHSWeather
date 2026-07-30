@@ -531,7 +531,8 @@
                     return;
                 }
 
-                const registration = await navigator.serviceWorker.ready;
+                const registration = await navigator.serviceWorker.register('/sw-push.js');
+                await navigator.serviceWorker.ready;
                 
                 const res = await fetch('/api/push/vapid-public-key');
                 if (!res.ok) throw new Error('Failed to fetch VAPID key from server.');

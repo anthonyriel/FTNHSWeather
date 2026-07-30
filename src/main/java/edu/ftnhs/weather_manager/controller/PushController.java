@@ -2,6 +2,7 @@ package edu.ftnhs.weather_manager.controller;
 
 import edu.ftnhs.weather_manager.entity.PushSubscription;
 import edu.ftnhs.weather_manager.repository.PushSubscriptionRepository;
+import edu.ftnhs.weather_manager.service.PushNotificationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +17,12 @@ public class PushController {
     private String vapidPublicKey;
 
     private final PushSubscriptionRepository subscriptionRepository;
+    private final PushNotificationService pushNotificationService;
 
-    public PushController(PushSubscriptionRepository subscriptionRepository) {
+    public PushController(PushSubscriptionRepository subscriptionRepository,
+                          PushNotificationService pushNotificationService) {
         this.subscriptionRepository = subscriptionRepository;
+        this.pushNotificationService = pushNotificationService;
     }
 
     @GetMapping("/vapid-public-key")
@@ -45,6 +49,22 @@ public class PushController {
                 }
             }
             return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/broadcast")
+    public ResponseEntity<?> broadcastNotification(@RequestBody Map<String, String> payloadMap) {
+        try {
+            String title = payloadMap.getOrDefault("title", "FTNHS Weather Hub Alert");
+            String body = payloadMap.getOrDefault("body", "System status update triggered.");
+            String url = payloadMap.getOrDefault("url", "/");
+
+            String jsonPayload = String.format("{\"title\":\"%s\",\"body\":\"%s\",\"url\":\"%s\"}", title, body, url);
+            
+            pushNotificationService.sendNotificationToAll(jsonPayload);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Broadcast sent successfully!"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
