@@ -224,77 +224,6 @@
                 </div>
             </div>
 
-            <!-- Dashboard Summary Mini Cards -->
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
-                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-cloud-rain me-1 text-primary"></i> Highest Rain Today</div>
-                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${highestRainToday} + ' mm/hr'">0.0 mm/hr</div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
-                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-wind me-1 text-success"></i> Peak Wind Today</div>
-                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${peakWindToday} + ' km/h'">0.0 km/h</div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
-                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-thermometer-half me-1 text-warning"></i> Temperature</div>
-                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${temperature} + ' °C'">0.0 °C</div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
-                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-shield-check me-1 text-info"></i> Today's Status</div>
-                        <div class="fs-6 fw-bold text-primary mt-1" th:text="${learningMode}">IN_PERSON</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AI Decision Explanation Panel -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4 ai-panel bg-white">
-                <div class="card-body p-4 p-md-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary fs-4">
-                            <i class="bi bi-robot"></i>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold text-dark mb-0">AI Decision Analysis & Breakdown</h5>
-                            <p class="text-muted small mb-0">Real-time evaluation rules applied by the automated decision engine.</p>
-                        </div>
-                    </div>
-
-                    <div class="row g-3 align-items-center bg-light p-3 rounded-3">
-                        <div class="col-12 col-md-7">
-                            <ul class="list-unstyled mb-0 small text-secondary">
-                                <li class="mb-2">
-                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                    <strong>Rainfall Rate:</strong> <span class="weather-value" th:text="${rainUsed} + ' mm/hr'">0.0 mm/hr</span> 
-                                    <span class="text-muted" th:text="${T(java.lang.Double).parseDouble(rainUsed) > 15.0 ? '(Exceeds suspension threshold)' : (T(java.lang.Double).parseDouble(rainUsed) >= 7.5 ? '(Exceeds modular threshold)' : '(Below suspension threshold)')}">(Safe)</span>
-                                </li>
-                                <li class="mb-2">
-                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                    <strong>Wind Speed:</strong> <span class="weather-value" th:text="${windUsed} + ' km/h'">0.0 km/h</span> (Normal operating range)
-                                </li>
-                                <li class="mb-2">
-                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                    <strong>Ambient Temperature:</strong> <span class="weather-value" th:text="${temperature} + ' °C'">0.0 °C</span> (Within safe limits)
-                                </li>
-                                <li>
-                                    <i class="bi bi-shield-fill-check text-primary me-2"></i>
-                                    <strong>Overall Assessed Risk Level:</strong> <span class="fw-bold text-dark" th:text="${riskLevel}">LOW</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-12 col-md-5 text-md-end border-top border-md-top-0 border-start-md pt-3 pt-md-0 ps-md-4">
-                            <div class="text-uppercase text-muted small fw-bold mb-1">Recommended Mode</div>
-                            <h4 class="fw-bolder text-primary mb-0" th:text="${learningMode}">IN_PERSON</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Comprehensive Weather Metrics Grid -->
             <div class="mb-3">
                 <h4 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-sun me-2 text-primary"></i>Current Meteorological Metrics</h4>
@@ -403,6 +332,77 @@
 
             </div>
 
+            <!-- AI Decision Explanation Panel -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 ai-panel bg-white">
+                <div class="card-body p-4 p-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary fs-4">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">AI Decision Analysis & Breakdown</h5>
+                            <p class="text-muted small mb-0">Real-time evaluation rules applied by the automated decision engine.</p>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 align-items-center bg-light p-3 rounded-3">
+                        <div class="col-12 col-md-7">
+                            <ul class="list-unstyled mb-0 small text-secondary">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <strong>Rainfall Rate:</strong> <span class="weather-value" th:text="${rainUsed} + ' mm/hr'">0.0 mm/hr</span> 
+                                    <span class="text-muted" th:text="${T(java.lang.Double).parseDouble(rainUsed) > 15.0 ? '(Exceeds suspension threshold)' : (T(java.lang.Double).parseDouble(rainUsed) >= 7.5 ? '(Exceeds modular threshold)' : '(Below suspension threshold)')}">(Safe)</span>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <strong>Wind Speed:</strong> <span class="weather-value" th:text="${windUsed} + ' km/h'">0.0 km/h</span> (Normal operating range)
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <strong>Ambient Temperature:</strong> <span class="weather-value" th:text="${temperature} + ' °C'">0.0 °C</span> (Within safe limits)
+                                </li>
+                                <li>
+                                    <i class="bi bi-shield-fill-check text-primary me-2"></i>
+                                    <strong>Overall Assessed Risk Level:</strong> <span class="fw-bold text-dark" th:text="${riskLevel}">LOW</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-12 col-md-5 text-md-end border-top border-md-top-0 border-start-md pt-3 pt-md-0 ps-md-4">
+                            <div class="text-uppercase text-muted small fw-bold mb-1">Recommended Mode</div>
+                            <h4 class="fw-bolder text-primary mb-0" th:text="${learningMode}">IN_PERSON</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Summary Mini Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-cloud-rain me-1 text-primary"></i> Highest Rain Today</div>
+                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${highestRainToday} + ' mm/hr'">0.0 mm/hr</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-wind me-1 text-success"></i> Peak Wind Today</div>
+                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${peakWindToday} + ' km/h'">0.0 km/h</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-thermometer-half me-1 text-warning"></i> Temperature</div>
+                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${temperature} + ' °C'">0.0 °C</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-shield-check me-1 text-info"></i> Today's Status</div>
+                        <div class="fs-6 fw-bold text-primary mt-1" th:text="${learningMode}">IN_PERSON</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Official DepEd Daily Report Quick Link (Only visible to Admin) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -486,9 +486,10 @@
             const seconds = manilaDate.getSeconds();
             
             const currentTotalSeconds = minutes * 60 + seconds;
-            let nextIntervalSeconds = Math.ceil(currentTotalSeconds / 900) * 900;
+            // Updated to 600 seconds (10 minutes) to sync with cron-job.org
+            let nextIntervalSeconds = Math.ceil(currentTotalSeconds / 600) * 600;
             if (nextIntervalSeconds === currentTotalSeconds) {
-                nextIntervalSeconds += 900;
+                nextIntervalSeconds += 600;
             }
             
             let diffSeconds = nextIntervalSeconds - currentTotalSeconds;

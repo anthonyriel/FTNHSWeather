@@ -8,7 +8,6 @@ import edu.ftnhs.weather_manager.repository.WeatherLogRepository;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -34,7 +33,7 @@ public class WeatherDecisionEngine {
     "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,pressure_msl,wind_speed_10m,visibility,uv_index,precipitation_probability&hourly=temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m,precipitation_probability&timezone=auto";
 
     public WeatherDecisionEngine(WeatherLogRepository weatherLogRepository, 
-                                   LearningStatusLogRepository learningStatusLogRepository) {
+                                 LearningStatusLogRepository learningStatusLogRepository) {
         this.weatherLogRepository = weatherLogRepository;
         this.learningStatusLogRepository = learningStatusLogRepository;
         this.restClient = RestClient.create();
@@ -54,12 +53,12 @@ public class WeatherDecisionEngine {
                 Duration duration = Duration.between(latestLog.getTimestamp(), now);
                 long elapsedMinutes = duration.toMinutes();
 
-                if (elapsedMinutes >= 15) {
-                    log.info("Last check was {} minutes ago (>= 15 mins). Executing weather check immediately...", elapsedMinutes);
+                if (elapsedMinutes >= 10) {
+                    log.info("Last check was {} minutes ago (>= 10 mins). Executing weather check immediately...", elapsedMinutes);
                     fetchWeatherAndEvaluateStatus();
                 } else {
-                    long remainingMinutes = 15 - elapsedMinutes;
-                    long remainingSeconds = (15 * 60) - duration.getSeconds();
+                    long remainingMinutes = 10 - elapsedMinutes;
+                    long remainingSeconds = (10 * 60) - duration.getSeconds();
                     log.info("Last check was {} minutes ago. Scheduling next catch-up check in {} minutes (approx {} seconds).", 
                              elapsedMinutes, remainingMinutes, remainingSeconds);
 
@@ -79,9 +78,10 @@ public class WeatherDecisionEngine {
         }
     }
 
-    @Scheduled(cron = "0 0/15 * * * ?")
+    // NOTE: @Scheduled has been removed here. 
+    // Updates are now cleanly driven by cron-job.org hitting /api/health every 10 minutes.
     public void fetchWeatherAndEvaluateStatus() {
-        log.info("Initiating scheduled weather check...");
+        log.info("Initiating weather check via external trigger...");
 
         try {
             OpenMeteoResponse response = restClient.get()
@@ -179,7 +179,7 @@ public class WeatherDecisionEngine {
         statusLog.setAutomatedBySystem(true);
         statusLog.setReason(reason);
         statusLog.setRiskLevel(risk);
-        statusLog.setConfidenceScore(BigDecimal.valueOf(confidence)); // Fixed BigDecimal assignment
+        statusLog.setConfidenceScore(BigDecimal.valueOf(confidence));
         statusLog.setRainfallUsed(rainMm);
         statusLog.setWindUsed(windSpeed);
         statusLog.setCreatedAt(OffsetDateTime.now(phZone));
