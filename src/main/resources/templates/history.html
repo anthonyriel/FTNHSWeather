@@ -103,7 +103,7 @@
             </div>
             <div class="offcanvas-body d-flex flex-column justify-content-between px-4 py-4">
                 <ul class="navbar-nav gap-2">
-                    <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/"><i class="bi bi-speedometer2 me-2 text-success"></i>Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/forecast"><i class="bi bi-calendar-week me-2 text-warning"></i>Forecast</a></li>
                     <li class="nav-item"><a class="nav-link active rounded px-3 py-2 bg-success text-white fw-medium" href="/history"><i class="bi bi-clock-history me-2"></i>History</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/analytics"><i class="bi bi-graph-up-arrow me-2 text-info"></i>Analytics</a></li>
@@ -124,7 +124,7 @@
                         <a href="/login" class="btn btn-outline-theme w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
                     </div>
                     <div th:if="${isAdminLoggedIn}">
-                        <div class="small text-muted mb-2"><i class="bi bi-person-circle text-success me-1"></i> Logged in as <strong class="text-dark" th:text="${session.adminName}">Admin</strong></div>
+                        <div class="small text-muted mb-2"><i class="bi bi-person-circle text-success me-1"></i> Logged in as <strong class="text-dark" th:text="${adminName}">Admin</strong></div>
                         <form action="/logout" method="post">
                             <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
                         </form>

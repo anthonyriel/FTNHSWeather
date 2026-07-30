@@ -8,4 +8,7 @@ import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsernameAndRole(String username, String role);
+    
+    // Added this method to allow safe lookup by username alone
+    Optional<User> findByUsername(String username);
 }

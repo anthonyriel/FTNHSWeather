@@ -18,10 +18,10 @@
             --primary-font: 'Inter', sans-serif;
             --heading-font: 'Poppins', sans-serif;
             --mono-font: 'Roboto Mono', monospace;
-            --header-bg: #198754; /* Balanced Medium Green */
-            --drawer-bg: #f4f8f5; /* Clean Soft Pale Green */
+            --header-bg: #198754;
+            --drawer-bg: #f4f8f5;
             --drawer-text: #1f3824;
-            --hover-bg: #e2ede5; /* Contrasting hover state */
+            --hover-bg: #e2ede5;
         }
         body {
             font-family: var(--primary-font);
@@ -96,7 +96,7 @@
 </head>
 <body>
     <div class="content-wrap">
-        <!-- Navigation Bar with Medium Green Theme -->
+        <!-- Navigation Bar -->
         <nav class="navbar navbar-dark app-header mb-4 shadow-sm">
             <div class="container">
                 <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2 text-warning"></i>FTNHS Weather Hub</a>
@@ -106,7 +106,7 @@
             </div>
         </nav>
 
-        <!-- Offcanvas Sidebar Drawer (Soft Pale Green with High Contrast Hover) -->
+        <!-- Offcanvas Sidebar Drawer -->
         <div class="offcanvas offcanvas-start custom-drawer" tabindex="-1" id="sidebarDrawer" aria-labelledby="sidebarDrawerLabel">
             <div class="offcanvas-header border-bottom border-success border-opacity-25 px-4 py-3">
                 <h5 class="offcanvas-title fw-bold" id="sidebarDrawerLabel"><i class="bi bi-cloud-sun me-2 text-success"></i>FTNHS Weather Hub</h5>
@@ -135,7 +135,7 @@
                         <a href="/login" class="btn btn-outline-theme w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
                     </div>
                     <div th:if="${isAdminLoggedIn}">
-                        <div class="small text-muted mb-2"><i class="bi bi-person-circle text-success me-1"></i> Logged in as <strong class="text-dark" th:text="${session.adminName}">Admin</strong></div>
+                        <div class="small text-muted mb-2"><i class="bi bi-person-circle text-success me-1"></i> Logged in as <strong class="text-dark" th:text="${adminName}">Admin</strong></div>
                         <form action="/logout" method="post">
                             <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
                         </form>
@@ -406,7 +406,7 @@
                 </div>
             </div>
 
-            <!-- Official DepEd Daily Report Quick Link (Only visible to Admin) -->
+            <!-- Official DepEd Daily Report Quick Link (Admin Only) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
@@ -419,7 +419,7 @@
                 </div>
             </div>
 
-            <!-- Admin Override Controls (Only visible to Admin) -->
+            <!-- Admin Override Controls (Admin Only) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>4H Manual Override</h5>
@@ -516,17 +516,6 @@
         updateCountdown();
     </script>
 
-    <!-- Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Service Worker registered! Scope: ', reg.scope))
-                    .catch(err => console.log('Service Worker registration failed: ', err));
-            });
-        }
-    </script>
-
     <!-- Web Push Subscription Logic -->
     <script>
         async function subscribeUserToPush() {
@@ -536,31 +525,25 @@
             }
 
             try {
-                // 1. Explicitly ask the user for permission first
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
-                    alert('You must click "Allow" when the browser asks for notification permissions.');
+                    alert('You must allow notifications in your browser settings to enable phone alerts.');
                     return;
                 }
 
                 const registration = await navigator.serviceWorker.ready;
                 
-                // 2. Fetch VAPID public key from backend
                 const res = await fetch('/api/push/vapid-public-key');
-                if (!res.ok) {
-                    throw new Error('Failed to fetch VAPID key from server.');
-                }
+                if (!res.ok) throw new Error('Failed to fetch VAPID key from server.');
                 const data = await res.json();
                 const pubKey = data.publicKey;
 
-                // 3. Subscribe the user
                 const convertedKey = urlBase64ToUint8Array(pubKey);
                 const subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: convertedKey
                 });
 
-                // 4. Send subscription to backend
                 const response = await fetch('/api/push/subscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

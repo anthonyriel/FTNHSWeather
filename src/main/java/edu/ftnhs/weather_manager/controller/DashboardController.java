@@ -8,11 +8,13 @@ import edu.ftnhs.weather_manager.repository.LearningStatusLogRepository;
 import edu.ftnhs.weather_manager.repository.UserRepository;
 import edu.ftnhs.weather_manager.repository.WeatherLogRepository;
 import edu.ftnhs.weather_manager.service.WeatherDecisionEngine;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,6 +22,9 @@ import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -47,15 +52,39 @@ public class DashboardController {
         this.weatherDecisionEngine = weatherDecisionEngine;
     }
 
+    private boolean checkAdmin(String adminUser) {
+        return adminUser != null && !adminUser.trim().isEmpty();
+    }
+
+    private String decodeCookieValue(String value) {
+        if (value == null || value.trim().isEmpty()) return "Admin";
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8.toString());
+        } catch (Exception e) {
+            return value;
+        }
+    }
+
+    // Global Model Attributes available for ALL pages/templates
+    @ModelAttribute("isAdminLoggedIn")
+    public boolean addAdminLoggedInAttribute(@CookieValue(value = "adminUser", required = false) String adminUser) {
+        return checkAdmin(adminUser);
+    }
+
+    @ModelAttribute("adminName")
+    public String addAdminNameAttribute(@CookieValue(value = "adminName", required = false) String adminName) {
+        return decodeCookieValue(adminName);
+    }
+
     @GetMapping("/")
-    public String viewDashboard(Model model, HttpSession session) {
+    public String viewDashboard(Model model) {
+
         ZoneId phZone = ZoneId.of("Asia/Manila");
         LocalDate today = LocalDate.now(phZone);
 
         WeatherLog latestLog = weatherLogRepository.findTopByOrderByTimestampDesc();
         Optional<LearningStatusLog> todayStatus = learningStatusLogRepository.findTopByTargetDateOrderByCreatedAtDesc(today);
         
-        // Default values
         String currentMode = "IN_PERSON";
         String precipitation = "0.0";
         String temperature = "0.0";
@@ -65,14 +94,12 @@ public class DashboardController {
         String weatherCondition = "Clear";
         String lastUpdated = "Waiting for first cron job run...";
 
-        // Advanced Decision Variables
         int confidenceScore = 0;
         String riskLevel = "UNKNOWN";
         String decisionReason = "Awaiting system analysis.";
         String rainUsed = "0.0";
         String windUsed = "0.0";
 
-        // Calculate Today's Summary Metrics (Highest Rain & Peak Wind)
         double highestRainToday = 0.0;
         double peakWindToday = 0.0;
         List<WeatherLog> allLogs = weatherLogRepository.findAllByOrderByTimestampDesc();
@@ -131,9 +158,6 @@ public class DashboardController {
             default -> "bg-secondary";
         };
 
-        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
-
-        // Base Data
         model.addAttribute("learningMode", currentMode);
         model.addAttribute("precipitation", precipitation);
         model.addAttribute("temperature", temperature);
@@ -141,9 +165,7 @@ public class DashboardController {
         model.addAttribute("lastUpdated", lastUpdated);
         model.addAttribute("bannerClass", bannerClass);
         model.addAttribute("hasActiveOverride", hasActiveOverride);
-        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
 
-        // Extended Data
         model.addAttribute("humidity", humidity);
         model.addAttribute("cloudCover", cloudCover);
         model.addAttribute("weatherCondition", weatherCondition);
@@ -164,28 +186,61 @@ public class DashboardController {
     }
 
     @PostMapping("/login")
-    public String processLogin(@RequestParam String username, @RequestParam String password, HttpSession session, Model model) {
-        Optional<User> adminUser = userRepository.findByUsernameAndRole(username, "ADMIN");
+    public String processLogin(@RequestParam String username, @RequestParam String password, HttpServletResponse response, Model model) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
 
-        if (adminUser.isPresent() && password.equals(adminUser.get().getPasswordHash())) {
-            session.setAttribute("adminUser", adminUser.get().getUsername());
-            session.setAttribute("adminName", adminUser.get().getName());
-            return "redirect:/";
-        } else {
-            model.addAttribute("error", "Invalid username or password.");
-            return "login";
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            boolean isAdmin = user.getRole() != null && user.getRole().trim().equalsIgnoreCase("ADMIN");
+            boolean passwordMatches = password.equals(user.getPasswordHash());
+
+            if (isAdmin && passwordMatches) {
+                try {
+                    String encodedUser = URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8.toString());
+                    String encodedName = URLEncoder.encode(user.getName() != null ? user.getName() : "Admin", StandardCharsets.UTF_8.toString());
+
+                    Cookie userCookie = new Cookie("adminUser", encodedUser);
+                    userCookie.setPath("/");
+                    userCookie.setMaxAge(30 * 24 * 60 * 60);
+                    response.addCookie(userCookie);
+
+                    Cookie nameCookie = new Cookie("adminName", encodedName);
+                    nameCookie.setPath("/");
+                    nameCookie.setMaxAge(30 * 24 * 60 * 60);
+                    response.addCookie(nameCookie);
+                } catch (Exception e) {
+                    Cookie userCookie = new Cookie("adminUser", user.getUsername());
+                    userCookie.setPath("/");
+                    userCookie.setMaxAge(30 * 24 * 60 * 60);
+                    response.addCookie(userCookie);
+                }
+
+                return "redirect:/";
+            }
         }
+        
+        model.addAttribute("error", "Invalid username or password.");
+        return "login";
     }
 
     @PostMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate();
+    public String logout(HttpServletResponse response) {
+        Cookie userCookie = new Cookie("adminUser", "");
+        userCookie.setPath("/");
+        userCookie.setMaxAge(0);
+        response.addCookie(userCookie);
+
+        Cookie nameCookie = new Cookie("adminName", "");
+        nameCookie.setPath("/");
+        nameCookie.setMaxAge(0);
+        response.addCookie(nameCookie);
+
         return "redirect:/";
     }
 
     @PostMapping("/admin/override")
-    public String overrideStatus(@RequestParam String overrideMode, HttpSession session) {
-        if (session.getAttribute("adminUser") == null) return "redirect:/login";
+    public String overrideStatus(@RequestParam String overrideMode, @CookieValue(value = "adminUser", required = false) String adminUser) {
+        if (!checkAdmin(adminUser)) return "redirect:/login";
 
         ZoneId phZone = ZoneId.of("Asia/Manila");
         LocalDate today = LocalDate.now(phZone);
@@ -204,8 +259,8 @@ public class DashboardController {
     }
 
     @PostMapping("/admin/revert-automatic")
-    public String revertToAutomatic(HttpSession session) {
-        if (session.getAttribute("adminUser") == null) return "redirect:/login";
+    public String revertToAutomatic(@CookieValue(value = "adminUser", required = false) String adminUser) {
+        if (!checkAdmin(adminUser)) return "redirect:/login";
 
         ZoneId phZone = ZoneId.of("Asia/Manila");
         LocalDate today = LocalDate.now(phZone);
@@ -213,14 +268,11 @@ public class DashboardController {
         return "redirect:/";
     }
 
-    // --- USER MANAGEMENT ENDPOINTS ---
-
     @GetMapping("/admin/users")
-    public String viewUserManagement(Model model, HttpSession session) {
-        if (session.getAttribute("adminUser") == null) return "redirect:/login";
+    public String viewUserManagement(Model model, @CookieValue(value = "adminUser", required = false) String adminUser) {
+        if (!checkAdmin(adminUser)) return "redirect:/login";
 
         model.addAttribute("users", userRepository.findAll());
-        model.addAttribute("isAdminLoggedIn", true);
         return "manage-users";
     }
 
@@ -234,8 +286,8 @@ public class DashboardController {
                            @RequestParam(required = false) String department,
                            @RequestParam(required = false) String position,
                            @RequestParam(required = false) String password,
-                           HttpSession session) {
-        if (session.getAttribute("adminUser") == null) return "redirect:/login";
+                           @CookieValue(value = "adminUser", required = false) String adminUser) {
+        if (!checkAdmin(adminUser)) return "redirect:/login";
 
         User user;
         if (id != null) {
@@ -261,22 +313,20 @@ public class DashboardController {
     }
 
     @PostMapping("/admin/users/delete/{id}")
-    public String deleteUser(@PathVariable UUID id, HttpSession session) {
-        if (session.getAttribute("adminUser") == null) return "redirect:/login";
+    public String deleteUser(@PathVariable UUID id, @CookieValue(value = "adminUser", required = false) String adminUser) {
+        if (!checkAdmin(adminUser)) return "redirect:/login";
         userRepository.deleteById(id);
         return "redirect:/admin/users";
     }
 
-    // Test endpoint: visit http://localhost:8081/test-weather in your browser to fetch & save immediately
     @GetMapping("/test-weather")
     public String testWeatherFetch() {
         weatherDecisionEngine.fetchWeatherAndEvaluateStatus();
         return "redirect:/";
     }
 
-    // Public advance forecast endpoint accessible to all users
     @GetMapping("/forecast")
-    public String viewForecast(Model model, HttpSession session) {
+    public String viewForecast(Model model) {
         RestClient restClient = RestClient.create();
         String url = "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&hourly=temperature_2m,precipitation,wind_speed_10m&timezone=auto";
         
@@ -296,15 +346,11 @@ public class DashboardController {
             model.addAttribute("error", "Unable to fetch advance forecast data at the moment.");
         }
         
-        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
-        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
-        
-        return "forecast"; // Renders forecast.html
+        return "forecast";
     }
 
-    // Public past weather logs history endpoint
     @GetMapping("/history")
-    public String viewWeatherHistory(Model model, HttpSession session) {
+    public String viewWeatherHistory(Model model) {
         ZoneId phZone = ZoneId.of("Asia/Manila");
         
         List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc()
@@ -321,16 +367,11 @@ public class DashboardController {
             .collect(Collectors.toList());
 
         model.addAttribute("weatherLogs", logs);
-        
-        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
-        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
-        
-        return "history"; // Renders history.html
+        return "history";
     }
 
-    // Official Printable Daily Report for DepEd
     @GetMapping("/report/daily")
-    public String viewDailyReport(Model model, HttpSession session) {
+    public String viewDailyReport(Model model) {
         ZoneId phZone = ZoneId.of("Asia/Manila");
         LocalDate today = LocalDate.now(phZone);
 
@@ -348,7 +389,6 @@ public class DashboardController {
             if (log.getRiskLevel() != null) riskLevel = log.getRiskLevel();
         }
 
-        // Calculate today's highest rain and peak wind
         double highestRain = 0.0;
         double peakWind = 0.0;
         List<WeatherLog> allLogs = weatherLogRepository.findAllByOrderByTimestampDesc();
@@ -373,16 +413,12 @@ public class DashboardController {
         model.addAttribute("latestHumidity", latestLog != null && latestLog.getHumidity() != null ? latestLog.getHumidity() : 0.0);
         model.addAttribute("generatedTimestamp", OffsetDateTime.now(phZone).format(DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm a")));
 
-        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
-        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
-
         return "daily-report";
     }
 
-    // System Diagnostics & Health Status (Admin Only)
     @GetMapping("/admin/diagnostics")
-    public String viewDiagnostics(Model model, HttpSession session) {
-        if (session.getAttribute("adminUser") == null) return "redirect:/login";
+    public String viewDiagnostics(Model model, @CookieValue(value = "adminUser", required = false) String adminUser) {
+        if (!checkAdmin(adminUser)) return "redirect:/login";
 
         ZoneId phZone = ZoneId.of("Asia/Manila");
         
@@ -397,7 +433,6 @@ public class DashboardController {
                     .format(DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm:ss a"));
         }
 
-        // Test Open-Meteo API Connectivity
         boolean apiConnected = false;
         String apiResponseMsg = "OK";
         RestClient restClient = RestClient.create();
@@ -420,23 +455,21 @@ public class DashboardController {
         model.addAttribute("apiResponseMsg", apiResponseMsg);
         model.addAttribute("serverTime", OffsetDateTime.now(phZone).format(DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm:ss a")));
 
-        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
-        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
-
-        return "diagnostics"; // Renders diagnostics.html
+        return "diagnostics";
     }
 
-    // Public About endpoint
     @GetMapping("/about")
-    public String viewAbout(Model model, HttpSession session) {
-        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
-        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
-        return "about"; // Renders about.html
+    public String viewAbout() {
+        return "about";
     }
 
-    // Export Weather Logs as CSV
     @GetMapping("/history/export")
-    public void exportWeatherLogsCsv(HttpServletResponse response, HttpSession session) throws IOException {
+    public void exportWeatherLogsCsv(HttpServletResponse response, @CookieValue(value = "adminUser", required = false) String adminUser) throws IOException {
+        if (!checkAdmin(adminUser)) {
+            response.sendRedirect("/login");
+            return;
+        }
+
         response.setContentType("text/csv");
         response.setHeader("Content-Disposition", "attachment; filename=ftnhs_weather_logs_" + LocalDate.now() + ".csv");
 
@@ -468,9 +501,8 @@ public class DashboardController {
         }
     }
 
-    // Weather Analytics & Trends Dashboard Endpoint with Monthly Summary Metrics
     @GetMapping("/analytics")
-    public String viewAnalytics(Model model, HttpSession session) {
+    public String viewAnalytics(Model model) {
         ZoneId phZone = ZoneId.of("Asia/Manila");
         LocalDate today = LocalDate.now(phZone);
         int currentMonth = today.getMonthValue();
@@ -478,7 +510,6 @@ public class DashboardController {
         
         List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc();
         
-        // Filter and calculate monthly statistics
         double monthlyRainTotal = 0.0;
         double tempSum = 0.0;
         int tempCount = 0;
@@ -502,7 +533,6 @@ public class DashboardController {
         
         double monthlyAvgTemp = tempCount > 0 ? (tempSum / tempCount) : 0.0;
 
-        // Count total suspension days this month
         long totalSuspensionsThisMonth = learningStatusLogRepository.findAll().stream()
                 .filter(statusLog -> statusLog.getTargetDate() != null 
                         && statusLog.getTargetDate().getMonthValue() == currentMonth 
@@ -510,7 +540,6 @@ public class DashboardController {
                         && "SUSPENDED".equals(statusLog.getStatus()))
                 .count();
 
-        // Reverse to chronological order for charts with null-safety filtering
         List<WeatherLog> chronologicalLogs = logs.stream()
                 .filter(log -> log.getTimestamp() != null)
                 .sorted((a, b) -> a.getTimestamp().compareTo(b.getTimestamp()))
@@ -532,7 +561,6 @@ public class DashboardController {
                 .map(log -> log.getWindSpeed() != null ? log.getWindSpeed() : 0.0)
                 .collect(Collectors.toList());
 
-        // Pass summary attributes to view
         model.addAttribute("currentMonthName", today.format(DateTimeFormatter.ofPattern("MMMM yyyy")));
         model.addAttribute("monthlyRainTotal", String.format("%.1f", monthlyRainTotal));
         model.addAttribute("monthlyAvgTemp", String.format("%.1f", monthlyAvgTemp));
@@ -544,9 +572,6 @@ public class DashboardController {
         model.addAttribute("precipitation", precipitation);
         model.addAttribute("windSpeeds", windSpeeds);
         
-        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
-        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
-
-        return "analytics"; // Renders analytics.html
+        return "analytics";
     }
 }
