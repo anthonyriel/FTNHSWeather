@@ -95,7 +95,6 @@
     </style>
 </head>
 <body>
-
     <div class="content-wrap">
         <!-- Navigation Bar with Medium Green Theme -->
         <nav class="navbar navbar-dark app-header mb-4 shadow-sm">
@@ -225,9 +224,12 @@
                 </div>
             </div>
 
-            <!-- Comprehensive Weather Metrics Grid -->
-            <div class="mb-3">
-                <h4 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-sun me-2 text-primary"></i>Current Meteorological Metrics</h4>
+            <!-- Comprehensive Weather Metrics Grid with Small Inline Notification Button -->
+            <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h4 class="fw-bold text-dark mb-0"><i class="bi bi-cloud-sun me-2 text-primary"></i>Current Meteorological Metrics</h4>
+                <button onclick="subscribeUserToPush()" class="btn btn-outline-success btn-sm fw-medium shadow-sm px-3 py-1">
+                    🔔 Enable Phone Notifications
+                </button>
             </div>
             
             <div class="row g-4 mb-4">
@@ -491,7 +493,6 @@
             const seconds = manilaDate.getSeconds();
             
             const currentTotalSeconds = minutes * 60 + seconds;
-            // Kept at 600 seconds (10 minutes) sync with cron-job.org
             let nextIntervalSeconds = Math.ceil(currentTotalSeconds / 600) * 600;
             if (nextIntervalSeconds === currentTotalSeconds) {
                 nextIntervalSeconds += 600;
@@ -515,6 +516,7 @@
         updateCountdown();
     </script>
 
+    <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -522,6 +524,69 @@
                     .then(reg => console.log('Service Worker registered! Scope: ', reg.scope))
                     .catch(err => console.log('Service Worker registration failed: ', err));
             });
+        }
+    </script>
+
+    <!-- Web Push Subscription Logic -->
+    <script>
+        async function subscribeUserToPush() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                alert('Push notifications are not supported by your browser or device.');
+                return;
+            }
+
+            try {
+                // 1. Explicitly ask the user for permission first
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    alert('You must click "Allow" when the browser asks for notification permissions.');
+                    return;
+                }
+
+                const registration = await navigator.serviceWorker.ready;
+                
+                // 2. Fetch VAPID public key from backend
+                const res = await fetch('/api/push/vapid-public-key');
+                if (!res.ok) {
+                    throw new Error('Failed to fetch VAPID key from server.');
+                }
+                const data = await res.json();
+                const pubKey = data.publicKey;
+
+                // 3. Subscribe the user
+                const convertedKey = urlBase64ToUint8Array(pubKey);
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: convertedKey
+                });
+
+                // 4. Send subscription to backend
+                const response = await fetch('/api/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(subscription)
+                });
+
+                if (response.ok) {
+                    alert('Notifications enabled successfully! You will now receive system alerts on your phone.');
+                } else {
+                    alert('Failed to save subscription on the server.');
+                }
+            } catch (err) {
+                console.error('Failed to subscribe to push notifications: ', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
         }
     </script>
 </body>

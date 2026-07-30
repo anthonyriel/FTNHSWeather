@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "vapid.public.key",
+      "type": "java.lang.String",
+      "description": "VAPID public key for web push notifications."
+    },
+    {
+      "name": "vapid.private.key",
+      "type": "java.lang.String",
+      "description": "VAPID private key for web push notifications."
+    },
+    {
+      "name": "vapid.subject",
+      "type": "java.lang.String",
+      "description": "VAPID subject contact URI."
+    }
+  ]
+}
