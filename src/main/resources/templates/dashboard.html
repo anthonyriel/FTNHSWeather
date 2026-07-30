@@ -16,6 +16,10 @@
             --primary-font: 'Inter', sans-serif;
             --heading-font: 'Poppins', sans-serif;
             --mono-font: 'Roboto Mono', monospace;
+            --header-bg: #198754; /* Balanced Medium Green */
+            --drawer-bg: #f4f8f5; /* Clean Soft Pale Green */
+            --drawer-text: #1f3824;
+            --hover-bg: #e2ede5; /* Contrasting hover state */
         }
         body {
             font-family: var(--primary-font);
@@ -60,54 +64,77 @@
         .ai-panel {
             border-left: 5px solid #0d6efd;
         }
-        .offcanvas .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.08);
+        .app-header {
+            background-color: var(--header-bg) !important;
+        }
+        .custom-drawer {
+            background-color: var(--drawer-bg) !important;
+            color: var(--drawer-text);
+        }
+        .custom-drawer .nav-link {
+            color: var(--drawer-text);
+            font-weight: 500;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .custom-drawer .nav-link:hover {
+            background-color: var(--hover-bg);
+            color: var(--header-bg);
+        }
+        .btn-outline-theme {
+            color: var(--header-bg);
+            border: 2px solid var(--header-bg);
+            transition: all 0.2s ease;
+        }
+        .btn-outline-theme:hover {
+            background-color: var(--header-bg);
+            color: #fff;
+            border-color: var(--header-bg);
         }
     </style>
 </head>
 <body>
 
     <div class="content-wrap">
-        <!-- Navigation Bar with Universal Hamburger / Drawer Trigger -->
-        <nav class="navbar navbar-dark bg-dark mb-4 shadow-sm">
+        <!-- Navigation Bar with Medium Green Theme -->
+        <nav class="navbar navbar-dark app-header mb-4 shadow-sm">
             <div class="container">
-                <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2 text-info"></i>FTNHS Weather Hub</a>
+                <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2 text-warning"></i>FTNHS Weather Hub</a>
                 <button class="btn btn-outline-light btn-sm fw-medium px-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
                     <i class="bi bi-list fs-5 me-1 align-middle"></i> Menu
                 </button>
             </div>
         </nav>
 
-        <!-- Offcanvas Sidebar Drawer -->
-        <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="sidebarDrawer" aria-labelledby="sidebarDrawerLabel">
-            <div class="offcanvas-header border-bottom border-secondary px-4 py-3">
-                <h5 class="offcanvas-title fw-bold" id="sidebarDrawerLabel"><i class="bi bi-cloud-sun me-2 text-info"></i>FTNHS Weather Hub</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        <!-- Offcanvas Sidebar Drawer (Soft Pale Green with High Contrast Hover) -->
+        <div class="offcanvas offcanvas-start custom-drawer" tabindex="-1" id="sidebarDrawer" aria-labelledby="sidebarDrawerLabel">
+            <div class="offcanvas-header border-bottom border-success border-opacity-25 px-4 py-3">
+                <h5 class="offcanvas-title fw-bold" id="sidebarDrawerLabel"><i class="bi bi-cloud-sun me-2 text-success"></i>FTNHS Weather Hub</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body d-flex flex-column justify-content-between px-4 py-4">
                 <ul class="navbar-nav gap-2">
-                    <li class="nav-item"><a class="nav-link active rounded px-3 py-2 bg-primary text-white fw-medium" href="/"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link rounded px-3 py-2 text-white" href="/forecast"><i class="bi bi-calendar-week me-2 text-warning"></i>Forecast</a></li>
-                    <li class="nav-item"><a class="nav-link rounded px-3 py-2 text-white" href="/history"><i class="bi bi-clock-history me-2 text-success"></i>History</a></li>
-                    <li class="nav-item"><a class="nav-link rounded px-3 py-2 text-white" href="/analytics"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Analytics</a></li>
-                    <li class="nav-item"><a class="nav-link rounded px-3 py-2 text-white" href="/about"><i class="bi bi-info-circle me-2 text-secondary"></i>About System</a></li>
+                    <li class="nav-item"><a class="nav-link active rounded px-3 py-2 bg-success text-white fw-medium" href="/"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/forecast"><i class="bi bi-calendar-week me-2 text-warning"></i>Forecast</a></li>
+                    <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/history"><i class="bi bi-clock-history me-2 text-primary"></i>History</a></li>
+                    <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/analytics"><i class="bi bi-graph-up-arrow me-2 text-info"></i>Analytics</a></li>
+                    <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/about"><i class="bi bi-info-circle me-2 text-secondary"></i>About System</a></li>
                     
                     <!-- Admin-Only Navigation Links -->
                     <th:block th:if="${isAdminLoggedIn}">
-                        <li class="nav-item mt-3 pt-3 border-top border-secondary">
+                        <li class="nav-item mt-3 pt-3 border-top border-success border-opacity-25">
                             <span class="text-muted small text-uppercase px-3 fw-bold tracking-wider">Admin Controls</span>
                         </li>
-                        <li class="nav-item"><a class="nav-link rounded px-3 py-2 text-white" href="/admin/diagnostics"><i class="bi bi-cpu me-2 text-danger"></i>Diagnostics</a></li>
-                        <li class="nav-item"><a class="nav-link rounded px-3 py-2 text-white" href="/admin/users"><i class="bi bi-people me-2 text-info"></i>User Management</a></li>
+                        <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/admin/diagnostics"><i class="bi bi-cpu me-2 text-danger"></i>Diagnostics</a></li>
+                        <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/admin/users"><i class="bi bi-people me-2 text-primary"></i>User Management</a></li>
                     </th:block>
                 </ul>
                 
-                <div class="pt-3 border-top border-secondary">
+                <div class="pt-3 border-top border-success border-opacity-25">
                     <div th:if="${!isAdminLoggedIn}">
-                        <a href="/login" class="btn btn-outline-light w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
+                        <a href="/login" class="btn btn-outline-theme w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
                     </div>
                     <div th:if="${isAdminLoggedIn}">
-                        <div class="small text-muted mb-2"><i class="bi bi-person-circle text-info me-1"></i> Logged in as <strong class="text-white" th:text="${session.adminName}">Admin</strong></div>
+                        <div class="small text-muted mb-2"><i class="bi bi-person-circle text-success me-1"></i> Logged in as <strong class="text-dark" th:text="${session.adminName}">Admin</strong></div>
                         <form action="/logout" method="post">
                             <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
                         </form>
@@ -414,16 +441,16 @@
         </div>
     </div>
 
-    <!-- Professional Footer -->
-    <footer class="bg-white border-top py-4 mt-auto text-muted small">
+    <!-- Professional Footer (Tech Stack Icons in One Line on Mobile) -->
+    <footer class="bg-white border-top py-3 mt-auto text-muted small">
         <div class="container text-center">
-            <p class="mb-1 fw-bold text-dark">FTNHS Weather Hub &bull; Fermin Tayabas National High School</p>
-            <p class="mb-2">Developed by <span class="text-primary fw-medium">Anthony Riel C. Diango CpE LPT</span></p>
-            <div class="d-flex justify-content-center flex-wrap gap-3 text-secondary opacity-75">
-                <span><i class="bi bi-server me-1"></i>Spring Boot</span>
-                <span><i class="bi bi-cloud-sun me-1"></i>Open-Meteo API</span>
-                <span><i class="bi bi-shield-check me-1"></i>Supabase</span>
-                <span><i class="bi bi-hdd-network me-1"></i>Render</span>
+            <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">FTNHS Weather Hub &bull; Fermin Tayabas National High School</p>
+            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE LPT</span></p>
+            <div class="d-flex justify-content-center flex-row flex-nowrap gap-2 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.68rem;">
+                <span class="text-nowrap"><i class="bi bi-server me-1"></i>Spring Boot</span>
+                <span class="text-nowrap"><i class="bi bi-cloud-sun me-1"></i>Open-Meteo</span>
+                <span class="text-nowrap"><i class="bi bi-shield-check me-1"></i>Supabase</span>
+                <span class="text-nowrap"><i class="bi bi-hdd-network me-1"></i>Render</span>
             </div>
         </div>
     </footer>
