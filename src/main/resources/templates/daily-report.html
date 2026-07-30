@@ -21,12 +21,17 @@
             font-family: var(--primary-font);
             background-color: #e9ecef;
             color: #212529;
+            font-size: 0.85rem;
+        }
+        @page {
+            size: A4;
+            margin: 0.5in;
         }
         .report-paper {
             background: white;
-            max-width: 850px;
-            margin: 40px auto;
-            padding: 50px;
+            max-width: 210mm;
+            margin: 15px auto;
+            padding: 25px 30px;
             border-radius: 8px;
             box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
         }
@@ -38,12 +43,13 @@
         }
         .signature-line {
             border-top: 1px solid #333;
-            margin-top: 50px;
-            padding-top: 8px;
+            margin-top: 35px;
+            padding-top: 6px;
         }
         @media print {
             body {
                 background-color: white;
+                font-size: 10pt;
             }
             .no-print {
                 display: none !important;
@@ -51,7 +57,8 @@
             .report-paper {
                 box-shadow: none;
                 margin: 0;
-                padding: 20px;
+                padding: 0;
+                width: 100%;
                 max-width: 100%;
             }
         }
@@ -60,116 +67,116 @@
 <body>
 
     <!-- Top Action Bar (Hidden during printing) -->
-    <div class="container text-center my-4 no-print">
-        <a href="/" class="btn btn-secondary me-2"><i class="bi bi-arrow-left me-1"></i>Back to Dashboard</a>
-        <button onclick="window.print()" class="btn btn-primary px-4 fw-medium"><i class="bi bi-printer me-2"></i>Print Official Report</button>
+    <div class="container text-center my-3 no-print">
+        <a href="/" class="btn btn-secondary btn-sm me-2"><i class="bi bi-arrow-left me-1"></i>Back to Dashboard</a>
+        <button onclick="window.print()" class="btn btn-primary btn-sm px-4 fw-medium"><i class="bi bi-printer me-2"></i>Print Official Report</button>
     </div>
 
     <!-- Official Report Document Container -->
     <div class="report-paper">
         
         <!-- Header / Letterhead -->
-        <div class="text-center border-bottom pb-4 mb-4">
-            <div class="text-uppercase small fw-bold text-muted tracking-wide">Republic of the Philippines &bull; Department of Education</div>
-            <div class="text-uppercase small fw-bold text-muted">Region VII &bull; Division of Bohol</div>
-            <h3 class="fw-bold text-dark mt-2 mb-1">FERMIN TAYABAS NATIONAL HIGH SCHOOL</h3>
-            <p class="text-muted small mb-0">Campus Weather Monitoring & Automated Decision System (FTNHS Weather Hub)</p>
+        <div class="text-center border-bottom pb-3 mb-3">
+            <div class="text-uppercase small fw-bold text-muted" style="font-size: 0.7rem; line-height: 1.2;">Republic of the Philippines<br>Department of Education</div>
+            <div class="text-uppercase small fw-bold text-muted" style="font-size: 0.7rem; line-height: 1.2;">Region VII &bull; Division of Bohol</div>
+            <h4 class="fw-bold text-dark mt-1 mb-0" style="font-size: 1.1rem;">FERMIN TAYABAS NATIONAL HIGH SCHOOL</h4>
+            <p class="text-muted small mb-0" style="font-size: 0.75rem;">Campus Weather Monitoring & Automated Decision System (FTNHS Weather Hub)</p>
         </div>
 
         <!-- Document Title -->
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-light p-3 rounded-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded-3">
             <div>
-                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Daily Weather & Advisory Report</h5>
-                <span class="small text-muted">Official Administrative Record</span>
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Daily Weather & Advisory Report</h6>
+                <span class="text-muted" style="font-size: 0.7rem;">Official Administrative Record</span>
             </div>
             <div class="text-end">
-                <span class="small text-muted d-block">Target Date:</span>
+                <span class="text-muted d-block" style="font-size: 0.7rem;">Target Date:</span>
                 <strong class="text-dark" th:text="${reportDate}">May 26, 2026</strong>
             </div>
         </div>
 
         <!-- Summary Status Box -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="border rounded-3 p-3 h-100 bg-white">
-                    <span class="small text-uppercase text-muted fw-bold d-block mb-1">Assessed Learning Mode</span>
-                    <h4 class="fw-bolder text-primary mb-0" th:text="${currentMode}">IN_PERSON</h4>
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <div class="border rounded-3 p-2 h-100 bg-white">
+                    <span class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 0.65rem;">Assessed Learning Mode</span>
+                    <h5 class="fw-bolder text-primary mb-0" th:text="${currentMode}">IN_PERSON</h5>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="border rounded-3 p-3 h-100 bg-white">
-                    <span class="small text-uppercase text-muted fw-bold d-block mb-1">Assessed Risk Level</span>
-                    <h4 class="fw-bolder text-dark mb-0" th:text="${riskLevel}">LOW</h4>
+            <div class="col-6">
+                <div class="border rounded-3 p-2 h-100 bg-white">
+                    <span class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 0.65rem;">Assessed Risk Level</span>
+                    <h5 class="fw-bolder text-dark mb-0" th:text="${riskLevel}">LOW</h5>
                 </div>
             </div>
         </div>
 
         <!-- Meteorological Findings Table -->
-        <div class="mb-4">
-            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-sun me-2"></i>Meteorological Parameters Evaluated</h6>
-            <table class="table table-bordered align-middle small">
+        <div class="mb-3">
+            <h6 class="fw-bold text-dark mb-2" style="font-size: 0.8rem;"><i class="bi bi-cloud-sun me-2"></i>Meteorological Parameters Evaluated</h6>
+            <table class="table table-bordered align-middle mb-0" style="font-size: 0.75rem;">
                 <thead class="table-light">
                     <tr>
-                        <th class="py-2">Metric Parameter</th>
-                        <th class="py-2">Recorded Value</th>
-                        <th class="py-2">Operational Threshold Status</th>
+                        <th class="py-1">Metric Parameter</th>
+                        <th class="py-1">Recorded Value</th>
+                        <th class="py-1">Operational Threshold Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="fw-medium">Highest Rainfall Rate Today</td>
-                        <td class="mono-val fw-bold" th:text="${highestRain} + ' mm/hr'">0.0 mm/hr</td>
-                        <td>
+                        <td class="fw-medium py-1">Highest Rainfall Rate Today</td>
+                        <td class="mono-val fw-bold py-1" th:text="${highestRain} + ' mm/hr'">0.0 mm/hr</td>
+                        <td class="py-1">
                             <span class="text-success fw-medium" th:if="${highestRain < 7.5}">Normal / Safe Operating Limits</span>
                             <span class="text-warning fw-medium" th:if="${highestRain >= 7.5 and highestRain <= 15.0}">Modular Advisory Threshold Reached</span>
                             <span class="text-danger fw-medium" th:if="${highestRain > 15.0}">Suspension Threshold Exceeded</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="fw-medium">Peak Wind Speed Today</td>
-                        <td class="mono-val fw-bold" th:text="${peakWind} + ' km/h'">0.0 km/h</td>
-                        <td class="text-success fw-medium">Within Safe Limits</td>
+                        <td class="fw-medium py-1">Peak Wind Speed Today</td>
+                        <td class="mono-val fw-bold py-1" th:text="${peakWind} + ' km/h'">0.0 km/h</td>
+                        <td class="text-success fw-medium py-1">Within Safe Limits</td>
                     </tr>
                     <tr>
-                        <td class="fw-medium">Ambient Temperature (Latest)</td>
-                        <td class="mono-val fw-bold" th:text="${latestTemp} + ' °C'">0.0 °C</td>
-                        <td class="text-muted">Normal Atmospheric</td>
+                        <td class="fw-medium py-1">Ambient Temperature (Latest)</td>
+                        <td class="mono-val fw-bold py-1" th:text="${latestTemp} + ' °C'">0.0 °C</td>
+                        <td class="text-muted py-1">Normal Atmospheric</td>
                     </tr>
                     <tr>
-                        <td class="fw-medium">Relative Humidity (Latest)</td>
-                        <td class="mono-val fw-bold" th:text="${latestHumidity} + '%'">0%</td>
-                        <td class="text-muted">Recorded Feed</td>
+                        <td class="fw-medium py-1">Relative Humidity (Latest)</td>
+                        <td class="mono-val fw-bold py-1" th:text="${latestHumidity} + '%'">0%</td>
+                        <td class="text-muted py-1">Recorded Feed</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
         <!-- Decision Rationale Section -->
-        <div class="mb-5">
-            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-info-circle me-2"></i>System Evaluation & Advisory Notes</h6>
-            <div class="p-3 bg-light rounded-3 border small text-secondary" th:text="${reason}">
+        <div class="mb-3">
+            <h6 class="fw-bold text-dark mb-1" style="font-size: 0.8rem;"><i class="bi bi-info-circle me-2"></i>System Evaluation & Advisory Notes</h6>
+            <div class="p-2 bg-light rounded-3 border text-secondary" style="font-size: 0.75rem;" th:text="${reason}">
                 Status updated automatically based on real-time Open-Meteo atmospheric readings.
             </div>
         </div>
 
         <!-- Signatures Section -->
-        <div class="row mt-5 pt-4">
+        <div class="row mt-4 pt-2">
             <div class="col-6">
                 <div class="signature-line text-center">
-                    <p class="fw-bold mb-0 text-dark">ANTONIO RIEL C. DIANGO</p>
-                    <p class="small text-muted mb-0">System Developer / Programming Teacher</p>
+                    <p class="fw-bold mb-0 text-dark" style="font-size: 0.8rem;">MARY JANE M. BALUMA</p>
+                    <p class="text-muted mb-0" style="font-size: 0.7rem;">School DRRM Coordinator</p>
                 </div>
             </div>
             <div class="col-6">
                 <div class="signature-line text-center">
-                    <p class="fw-bold mb-0 text-dark">SCHOOL PRINCIPAL / OIC</p>
-                    <p class="small text-muted mb-0">Fermin Tayabas National High School</p>
+                    <p class="fw-bold mb-0 text-dark" style="font-size: 0.8rem;">KEITH B. TEMPLA MATCS</p>
+                    <p class="text-muted mb-0" style="font-size: 0.7rem;">School Head</p>
                 </div>
             </div>
         </div>
 
         <!-- Footer Timestamp -->
-        <div class="text-center text-muted mt-5 pt-3 border-top small" style="font-size: 0.75rem;">
+        <div class="text-center text-muted mt-3 pt-2 border-top" style="font-size: 0.65rem;">
             FTNHS Weather Hub Official Report &bull; Generated securely on <span th:text="${generatedTimestamp}">May 26, 2026 - 10:00 AM</span>
         </div>
 

@@ -229,6 +229,9 @@ public class DashboardController {
                            @RequestParam String email,
                            @RequestParam String name,
                            @RequestParam String role,
+                           @RequestParam(required = false) String phone,
+                           @RequestParam(required = false) String department,
+                           @RequestParam(required = false) String position,
                            @RequestParam(required = false) String password,
                            HttpSession session) {
         if (session.getAttribute("adminUser") == null) return "redirect:/login";
@@ -242,12 +245,15 @@ public class DashboardController {
         } else {
             user = new User();
             user.setPasswordHash(password);
+            user.setStatus("ACTIVE");
         }
         user.setUsername(username);
         user.setEmail(email);
         user.setName(name);
         user.setRole(role);
-        user.setStatus("ACTIVE");
+        user.setPhone(phone);
+        user.setDepartment(department);
+        user.setPosition(position);
 
         userRepository.save(user);
         return "redirect:/admin/users";
@@ -372,45 +378,6 @@ public class DashboardController {
         return "daily-report";
     }
 
-    // Weather Analytics & Trends Dashboard Endpoint
-    @GetMapping("/analytics")
-    public String viewAnalytics(Model model, HttpSession session) {
-        ZoneId phZone = ZoneId.of("Asia/Manila");
-        
-        List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc();
-        
-        // Reverse to chronological order for charts (oldest to newest)
-        List<WeatherLog> chronologicalLogs = logs.stream()
-                .sorted((a, b) -> a.getTimestamp().compareTo(b.getTimestamp()))
-                .collect(Collectors.toList());
-
-        List<String> timestamps = chronologicalLogs.stream()
-                .map(log -> log.getTimestamp() != null ? log.getTimestamp().atZoneSameInstant(phZone).format(DateTimeFormatter.ofPattern("MMM dd HH:mm")) : "")
-                .collect(Collectors.toList());
-
-        List<Double> temperatures = chronologicalLogs.stream()
-                .map(log -> log.getTemperature() != null ? log.getTemperature() : 0.0)
-                .collect(Collectors.toList());
-
-        List<Double> precipitation = chronologicalLogs.stream()
-                .map(log -> log.getPrecipitationMm())
-                .collect(Collectors.toList());
-
-        List<Double> windSpeeds = chronologicalLogs.stream()
-                .map(log -> log.getWindSpeed() != null ? log.getWindSpeed() : 0.0)
-                .collect(Collectors.toList());
-
-        model.addAttribute("timestamps", timestamps);
-        model.addAttribute("temperatures", temperatures);
-        model.addAttribute("precipitation", precipitation);
-        model.addAttribute("windSpeeds", windSpeeds);
-        
-        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
-        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
-
-        return "analytics"; // Renders analytics.html
-    }
-
     // System Diagnostics & Health Status (Admin Only)
     @GetMapping("/admin/diagnostics")
     public String viewDiagnostics(Model model, HttpSession session) {
@@ -498,5 +465,86 @@ public class DashboardController {
             }
             writer.flush();
         }
+    }
+
+    // Weather Analytics & Trends Dashboard Endpoint with Monthly Summary Metrics
+    @GetMapping("/analytics")
+    public String viewAnalytics(Model model, HttpSession session) {
+        ZoneId phZone = ZoneId.of("Asia/Manila");
+        LocalDate today = LocalDate.now(phZone);
+        int currentMonth = today.getMonthValue();
+        int currentYear = today.getYear();
+        
+        List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc();
+        
+        // Filter and calculate monthly statistics
+        double monthlyRainTotal = 0.0;
+        double tempSum = 0.0;
+        int tempCount = 0;
+        double monthlyPeakWind = 0.0;
+        
+        for (WeatherLog log : logs) {
+            if (log.getTimestamp() != null) {
+                LocalDate logDate = log.getTimestamp().atZoneSameInstant(phZone).toLocalDate();
+                if (logDate.getMonthValue() == currentMonth && logDate.getYear() == currentYear) {
+                    monthlyRainTotal += log.getPrecipitationMm();
+                    if (log.getTemperature() != null) {
+                        tempSum += log.getTemperature();
+                        tempCount++;
+                    }
+                    if (log.getWindSpeed() != null && log.getWindSpeed() > monthlyPeakWind) {
+                        monthlyPeakWind = log.getWindSpeed();
+                    }
+                }
+            }
+        }
+        
+        double monthlyAvgTemp = tempCount > 0 ? (tempSum / tempCount) : 0.0;
+
+        // Count total suspension days this month
+        long totalSuspensionsThisMonth = learningStatusLogRepository.findAll().stream()
+                .filter(statusLog -> statusLog.getTargetDate() != null 
+                        && statusLog.getTargetDate().getMonthValue() == currentMonth 
+                        && statusLog.getTargetDate().getYear() == currentYear 
+                        && "SUSPENDED".equals(statusLog.getStatus()))
+                .count();
+
+        // Reverse to chronological order for charts (oldest to newest)
+        List<WeatherLog> chronologicalLogs = logs.stream()
+                .sorted((a, b) -> a.getTimestamp().compareTo(b.getTimestamp()))
+                .collect(Collectors.toList());
+
+        List<String> timestamps = chronologicalLogs.stream()
+                .map(log -> log.getTimestamp() != null ? log.getTimestamp().atZoneSameInstant(phZone).format(DateTimeFormatter.ofPattern("MMM dd HH:mm")) : "")
+                .collect(Collectors.toList());
+
+        List<Double> temperatures = chronologicalLogs.stream()
+                .map(log -> log.getTemperature() != null ? log.getTemperature() : 0.0)
+                .collect(Collectors.toList());
+
+        List<Double> precipitation = chronologicalLogs.stream()
+                .map(log -> log.getPrecipitationMm())
+                .collect(Collectors.toList());
+
+        List<Double> windSpeeds = chronologicalLogs.stream()
+                .map(log -> log.getWindSpeed() != null ? log.getWindSpeed() : 0.0)
+                .collect(Collectors.toList());
+
+        // Pass summary attributes to view
+        model.addAttribute("currentMonthName", today.format(DateTimeFormatter.ofPattern("MMMM yyyy")));
+        model.addAttribute("monthlyRainTotal", String.format("%.1f", monthlyRainTotal));
+        model.addAttribute("monthlyAvgTemp", String.format("%.1f", monthlyAvgTemp));
+        model.addAttribute("monthlyPeakWind", String.format("%.1f", monthlyPeakWind));
+        model.addAttribute("totalSuspensionsThisMonth", totalSuspensionsThisMonth);
+
+        model.addAttribute("timestamps", timestamps);
+        model.addAttribute("temperatures", temperatures);
+        model.addAttribute("precipitation", precipitation);
+        model.addAttribute("windSpeeds", windSpeeds);
+        
+        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
+        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
+
+        return "analytics"; // Renders analytics.html
     }
 }

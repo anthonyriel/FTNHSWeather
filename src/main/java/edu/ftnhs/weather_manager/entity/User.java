@@ -9,21 +9,29 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    private String username; // Added username field
+    private String username;
     private String email;
     private String name;
     private String role;
     private String phone;
+    private String department;
+    private String position;
     private String status;
-
+    
     @Column(name = "password_hash")
-    private String passwordHash; // Added password hash field
+    private String passwordHash;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
+
+    @Column(name = "last_login")
+    private OffsetDateTime lastLogin;
 
     public User() {}
 
@@ -46,12 +54,24 @@ public class User {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+
+    public String getPosition() { return position; }
+    public void setPosition(String position) { this.position = position; }
+
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+
+    public OffsetDateTime getLastLogin() { return lastLogin; }
+    public void setLastLogin(OffsetDateTime lastLogin) { this.lastLogin = lastLogin; }
 }
