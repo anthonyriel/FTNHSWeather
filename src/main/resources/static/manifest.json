@@ -1,0 +1,17 @@
+{
+  "name": "FTNHS Weather Hub",
+  "short_name": "Weather Hub",
+  "description": "Automated Learning Mode Decision System for Fermin Tayabas National High School",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#2e6f40",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/icons/cloud-sun-fill.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
