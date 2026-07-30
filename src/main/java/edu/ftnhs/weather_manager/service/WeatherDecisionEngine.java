@@ -78,7 +78,6 @@ public class WeatherDecisionEngine {
         }
     }
 
-    // NOTE: @Scheduled has been removed here. 
     // Updates are now cleanly driven by cron-job.org hitting /api/health every 10 minutes.
     public void fetchWeatherAndEvaluateStatus() {
         log.info("Initiating weather check via external trigger...");
@@ -156,21 +155,37 @@ public class WeatherDecisionEngine {
             return;
         }
 
+        // Default to HAYO (Continue)
         String mode = "IN_PERSON";
         String risk = "LOW";
         int confidence = 95;
-        String reason = "Normal weather conditions.";
+        String reason = "Hayo (Continue): Clear skies or manageable weather. Standard classroom instruction proceeds.";
 
+        // 1. Check for HINTO (Stop)
         if (rainMm > 15.0 || windSpeed > 60.0) {
             mode = "SUSPENDED";
             risk = "HIGH";
             confidence = 98;
-            reason = "Heavy rainfall (>15.0 mm/hr) or severe wind detected. Classes suspended for safety.";
-        } else if (rainMm >= 7.5 || windSpeed >= 40.0) {
+            reason = "Hinto (Stop): Severe weather detected. Complete operational halt. Focus entirely on survival and safety.";
+        } 
+        // 2. Check for HINAY (Ease-in)
+        else if (rainMm >= 7.5 || windSpeed >= 40.0) {
             mode = "MODULAR";
             risk = "MODERATE";
             confidence = 95;
-            reason = "Moderate rainfall (7.5 - 15.0 mm/hr) detected. Transition to modular learning recommended.";
+            reason = "Hinay (Ease-in): Mild weather disruptions detected. Shift to Alternative Delivery Modes (ADM) with relaxed deadlines.";
+        } 
+        // 3. Check for HINGA (Check-in) - Triggered if yesterday was Suspended but today is clear
+        else {
+            LocalDate yesterday = today.minusDays(1);
+            Optional<LearningStatusLog> yesterdayLog = learningStatusLogRepository.findTopByTargetDateOrderByCreatedAtDesc(yesterday);
+            
+            if (yesterdayLog.isPresent() && "SUSPENDED".equals(yesterdayLog.get().getStatus())) {
+                mode = "CHECK_IN";
+                risk = "LOW";
+                confidence = 90;
+                reason = "Hinga (Check-in): Aftermath of severe weather. Academics take a back seat. Focus on Psychological First Aid (PFA) and well-being checks.";
+            }
         }
 
         LearningStatusLog statusLog = new LearningStatusLog();
@@ -185,6 +200,6 @@ public class WeatherDecisionEngine {
         statusLog.setCreatedAt(OffsetDateTime.now(phZone));
 
         learningStatusLogRepository.save(statusLog);
-        log.info("Automated learning status evaluated: Mode = {}, Risk = {}", mode, risk);
+        log.info("DepEd 4H status evaluated: Mode = {}, Risk = {}", mode, risk);
     }
 }

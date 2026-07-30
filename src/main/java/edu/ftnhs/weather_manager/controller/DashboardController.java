@@ -110,7 +110,7 @@ public class DashboardController {
             currentMode = log.getStatus();
             
             confidenceScore = log.getConfidenceScore() != null ? log.getConfidenceScore().intValue() : 95;
-            riskLevel = log.getRiskLevel() != null ? log.getRiskLevel() : (currentMode.equals("IN_PERSON") ? "LOW" : "HIGH");
+            riskLevel = log.getRiskLevel() != null ? log.getRiskLevel() : ((currentMode.equals("IN_PERSON") || currentMode.equals("CHECK_IN")) ? "LOW" : "HIGH");
             decisionReason = log.getReason() != null ? log.getReason() : "Learning mode updated based on current conditions.";
             rainUsed = log.getRainfallUsed() != null ? String.valueOf(log.getRainfallUsed()) : precipitation;
             windUsed = log.getWindUsed() != null ? String.valueOf(log.getWindUsed()) : windSpeed;
@@ -126,6 +126,7 @@ public class DashboardController {
         String bannerClass = switch (currentMode) {
             case "IN_PERSON" -> "bg-success";
             case "MODULAR" -> "bg-warning text-dark";
+            case "CHECK_IN" -> "bg-info text-dark";
             case "SUSPENDED" -> "bg-danger";
             default -> "bg-secondary";
         };
@@ -509,13 +510,14 @@ public class DashboardController {
                         && "SUSPENDED".equals(statusLog.getStatus()))
                 .count();
 
-        // Reverse to chronological order for charts (oldest to newest)
+        // Reverse to chronological order for charts with null-safety filtering
         List<WeatherLog> chronologicalLogs = logs.stream()
+                .filter(log -> log.getTimestamp() != null)
                 .sorted((a, b) -> a.getTimestamp().compareTo(b.getTimestamp()))
                 .collect(Collectors.toList());
 
         List<String> timestamps = chronologicalLogs.stream()
-                .map(log -> log.getTimestamp() != null ? log.getTimestamp().atZoneSameInstant(phZone).format(DateTimeFormatter.ofPattern("MMM dd HH:mm")) : "")
+                .map(log -> log.getTimestamp().atZoneSameInstant(phZone).format(DateTimeFormatter.ofPattern("MMM dd HH:mm")))
                 .collect(Collectors.toList());
 
         List<Double> temperatures = chronologicalLogs.stream()

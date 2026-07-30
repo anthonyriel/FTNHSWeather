@@ -183,7 +183,7 @@
                     
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
                         <div class="text-uppercase small fw-bold opacity-75 letter-spacing-1">
-                            <i class="bi bi-building me-1"></i> Fermin Tayabas National High School
+                            <i class="bi bi-building me-1"></i> Fermin Tayabas National High School &bull; DepEd 4H Protocol
                         </div>
                         <div class="small fw-medium bg-dark bg-opacity-25 px-3 py-1 rounded-pill weather-value">
                             <i class="bi bi-clock me-1"></i> <span id="liveClock">Loading system time...</span>
@@ -194,9 +194,10 @@
                         <div class="col-12 col-md-7">
                             <h5 class="fw-bold opacity-75 mb-2">Today's Learning Mode</h5>
                             <h1 class="display-5 display-md-4 fw-bolder mb-3 d-flex align-items-center gap-3 flex-wrap">
-                                <span th:if="${learningMode == 'IN_PERSON'}"><i class="bi bi-check-circle-fill"></i> IN-PERSON</span>
-                                <span th:if="${learningMode == 'MODULAR'}"><i class="bi bi-exclamation-triangle-fill"></i> MODULAR</span>
-                                <span th:if="${learningMode == 'SUSPENDED'}"><i class="bi bi-x-octagon-fill"></i> SUSPENDED</span>
+                                <span th:if="${learningMode == 'IN_PERSON'}"><i class="bi bi-check-circle-fill"></i> HAYO <span class="fs-4 opacity-75 fw-normal">(In-Person)</span></span>
+                                <span th:if="${learningMode == 'MODULAR'}"><i class="bi bi-book-half"></i> HINAY <span class="fs-4 opacity-75 fw-normal">(Modular)</span></span>
+                                <span th:if="${learningMode == 'CHECK_IN'}"><i class="bi bi-heart-pulse-fill"></i> HINGA <span class="fs-4 opacity-75 fw-normal">(Check-in)</span></span>
+                                <span th:if="${learningMode == 'SUSPENDED'}"><i class="bi bi-x-octagon-fill"></i> HINTO <span class="fs-4 opacity-75 fw-normal">(Suspended)</span></span>
                             </h1>
                             <p class="fs-6 fs-md-5 mb-0 opacity-100 fw-medium" th:text="${decisionReason}">Status updated based on current conditions.</p>
                         </div>
@@ -340,7 +341,7 @@
                             <i class="bi bi-robot"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold text-dark mb-0">AI Decision Analysis & Breakdown</h5>
+                            <h5 class="fw-bold text-dark mb-0">DepEd 4H Engine Analysis</h5>
                             <p class="text-muted small mb-0">Real-time evaluation rules applied by the automated decision engine.</p>
                         </div>
                     </div>
@@ -351,7 +352,7 @@
                                 <li class="mb-2">
                                     <i class="bi bi-check-circle-fill text-success me-2"></i>
                                     <strong>Rainfall Rate:</strong> <span class="weather-value" th:text="${rainUsed} + ' mm/hr'">0.0 mm/hr</span> 
-                                    <span class="text-muted" th:text="${T(java.lang.Double).parseDouble(rainUsed) > 15.0 ? '(Exceeds suspension threshold)' : (T(java.lang.Double).parseDouble(rainUsed) >= 7.5 ? '(Exceeds modular threshold)' : '(Below suspension threshold)')}">(Safe)</span>
+                                    <span class="text-muted" th:text="${T(java.lang.Double).parseDouble(rainUsed) > 15.0 ? '(Triggers Hinto)' : (T(java.lang.Double).parseDouble(rainUsed) >= 7.5 ? '(Triggers Hinay)' : '(Safe / Hayo)')}">(Safe)</span>
                                 </li>
                                 <li class="mb-2">
                                     <i class="bi bi-check-circle-fill text-success me-2"></i>
@@ -369,7 +370,7 @@
                         </div>
                         <div class="col-12 col-md-5 text-md-end border-top border-md-top-0 border-start-md pt-3 pt-md-0 ps-md-4">
                             <div class="text-uppercase text-muted small fw-bold mb-1">Recommended Mode</div>
-                            <h4 class="fw-bolder text-primary mb-0" th:text="${learningMode}">IN_PERSON</h4>
+                            <h4 class="fw-bolder text-primary mb-0" th:text="${learningMode == 'IN_PERSON' ? 'HAYO (Continue)' : (learningMode == 'MODULAR' ? 'HINAY (Ease-in)' : (learningMode == 'CHECK_IN' ? 'HINGA (Check-in)' : 'HINTO (Stop)'))}">HAYO</h4>
                         </div>
                     </div>
                 </div>
@@ -397,8 +398,8 @@
                 </div>
                 <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
-                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-shield-check me-1 text-info"></i> Today's Status</div>
-                        <div class="fs-6 fw-bold text-primary mt-1" th:text="${learningMode}">IN_PERSON</div>
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-shield-check me-1 text-info"></i> 4H Status</div>
+                        <div class="fs-6 fw-bold text-primary mt-1" th:text="${learningMode == 'IN_PERSON' ? 'HAYO' : (learningMode == 'MODULAR' ? 'HINAY' : (learningMode == 'CHECK_IN' ? 'HINGA' : 'HINTO'))}">IN_PERSON</div>
                     </div>
                 </div>
             </div>
@@ -419,22 +420,26 @@
             <!-- Admin Override Controls (Only visible to Admin) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>Manual Override</h5>
+                    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>4H Manual Override</h5>
                     <div class="d-flex flex-wrap gap-2">
                         <form action="/admin/override" method="post" class="d-inline">
                             <input type="hidden" name="overrideMode" value="IN_PERSON">
-                            <button type="submit" class="btn btn-outline-success fw-medium btn-sm"><i class="bi bi-check-circle me-1"></i>Force In-Person</button>
+                            <button type="submit" class="btn btn-outline-success fw-medium btn-sm"><i class="bi bi-check-circle me-1"></i>Force Hayo</button>
                         </form>
                         <form action="/admin/override" method="post" class="d-inline">
                             <input type="hidden" name="overrideMode" value="MODULAR">
-                            <button type="submit" class="btn btn-outline-warning text-dark fw-medium btn-sm"><i class="bi bi-exclamation-triangle me-1"></i>Force Modular</button>
+                            <button type="submit" class="btn btn-outline-warning text-dark fw-medium btn-sm"><i class="bi bi-book-half me-1"></i>Force Hinay</button>
+                        </form>
+                        <form action="/admin/override" method="post" class="d-inline">
+                            <input type="hidden" name="overrideMode" value="CHECK_IN">
+                            <button type="submit" class="btn btn-outline-info text-dark fw-medium btn-sm"><i class="bi bi-heart-pulse me-1"></i>Force Hinga</button>
                         </form>
                         <form action="/admin/override" method="post" class="d-inline">
                             <input type="hidden" name="overrideMode" value="SUSPENDED">
-                            <button type="submit" class="btn btn-outline-danger fw-medium btn-sm"><i class="bi bi-x-octagon me-1"></i>Force Suspended</button>
+                            <button type="submit" class="btn btn-outline-danger fw-medium btn-sm"><i class="bi bi-x-octagon me-1"></i>Force Hinto</button>
                         </form>
                         <form action="/admin/revert-automatic" method="post" class="d-inline ms-md-auto">
-                            <button type="submit" class="btn btn-secondary fw-medium btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Revert to Automatic</button>
+                            <button type="submit" class="btn btn-secondary fw-medium btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Revert to Auto</button>
                         </form>
                     </div>
                 </div>
@@ -446,7 +451,7 @@
     <footer class="bg-white border-top py-3 mt-auto text-muted small">
         <div class="container text-center">
             <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">FTNHS Weather Hub</p>
-            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE LPT</span></p>
+            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
             <div class="d-flex justify-content-center flex-row flex-nowrap gap-2 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.68rem;">
                 <span class="text-nowrap"><i class="bi bi-server me-1"></i>Spring Boot</span>
                 <span class="text-nowrap"><i class="bi bi-cloud-sun me-1"></i>Open-Meteo</span>
@@ -486,7 +491,7 @@
             const seconds = manilaDate.getSeconds();
             
             const currentTotalSeconds = minutes * 60 + seconds;
-            // Updated to 600 seconds (10 minutes) to sync with cron-job.org
+            // Kept at 600 seconds (10 minutes) sync with cron-job.org
             let nextIntervalSeconds = Math.ceil(currentTotalSeconds / 600) * 600;
             if (nextIntervalSeconds === currentTotalSeconds) {
                 nextIntervalSeconds += 600;

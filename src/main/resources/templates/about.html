@@ -128,7 +128,7 @@
             <!-- Page Header -->
             <div class="mb-4">
                 <h2 class="fw-bold text-dark"><i class="bi bi-info-circle me-2 text-success"></i>System Architecture & Guidelines</h2>
-                <p class="text-muted small mb-0">Learn how the automated Learning Mode Decision System evaluates weather conditions for Fermin Tayabas National High School.</p>
+                <p class="text-muted small mb-0">Learn how the automated Learning Mode Decision System evaluates weather conditions using the official DepEd 4H Framework.</p>
             </div>
 
             <!-- Grid Content -->
@@ -145,7 +145,7 @@
                                 <h4 class="fw-bold mb-0 text-dark">Project Purpose</h4>
                             </div>
                             <p class="text-secondary mb-0 small lh-lg">
-                                The <strong>FTNHS Weather Hub</strong> is an institutional decision-support tool engineered to automate and streamline learning modality transitions (In-Person, Modular, or Suspended). By eliminating manual delays during inclement weather, it ensures student and faculty safety while maintaining academic continuity.
+                                The <strong>FTNHS Weather Hub</strong> is an institutional decision-support tool engineered to automate and streamline learning modality transitions. Integrated directly with the <strong>DepEd 4H Protocol (Hayo, Hinay, Hinga, Hinto)</strong>, it eliminates manual delays during inclement weather, ensuring student and faculty safety while maintaining academic continuity and mental well-being.
                             </p>
                         </div>
                     </div>
@@ -162,7 +162,7 @@
                                 <h4 class="fw-bold mb-0 text-dark">Weather Data Source</h4>
                             </div>
                             <p class="text-secondary mb-0 small lh-lg">
-                                The system synchronizes in real-time with the <strong>Open-Meteo API</strong>, polling high-resolution meteorological data covering precipitation rate, ambient temperature, wind speed, relative humidity, and cloud cover specifically mapped to the school's geographical coordinates.
+                                The system synchronizes in real-time with the <strong>Open-Meteo API</strong>, polling high-resolution meteorological data covering precipitation rate, ambient temperature, wind speed, relative humidity, and cloud cover specifically mapped to the geographical coordinates of Fermin Tayabas National High School.
                             </p>
                         </div>
                     </div>
@@ -170,16 +170,16 @@
 
             </div>
 
-            <!-- Decision Algorithm & Thresholds -->
+            <!-- Decision Algorithm & Thresholds (DepEd 4H Framework) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
                 <div class="card-body p-4 p-md-5">
                     <div class="d-flex align-items-center mb-4">
                         <div class="feature-icon bg-warning bg-opacity-10 text-warning fs-4 me-3">
-                            <i class="bi bi-cpu"></i>
+                            <i class="bi bi-diagram-3"></i>
                         </div>
                         <div>
-                            <h4 class="fw-bold mb-0 text-dark">Decision Algorithm & Threshold Standards</h4>
-                            <p class="text-muted small mb-0">Based on standard meteorological rainfall thresholds and DepEd advisory guidelines.</p>
+                            <h4 class="fw-bold mb-0 text-dark">The DepEd 4H Framework Thresholds</h4>
+                            <p class="text-muted small mb-0">How the AI engine maps meteorological data to official operational guidelines.</p>
                         </div>
                     </div>
 
@@ -187,26 +187,36 @@
                         <table class="table table-bordered align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="width: 25%;">Rainfall Rate (mm/hr)</th>
-                                    <th style="width: 25%;">Evaluated Learning Mode</th>
-                                    <th style="width: 50%;">Operational Action & Description</th>
+                                    <th style="width: 20%;">4H Protocol</th>
+                                    <th style="width: 25%;">Trigger Conditions</th>
+                                    <th style="width: 15%;">System Mode</th>
+                                    <th style="width: 40%;">Operational Action & Description</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="fw-bold text-success">&lt; 7.5 mm/hr</td>
-                                    <td><span class="badge bg-success px-3 py-2">IN-PERSON</span></td>
-                                    <td class="text-secondary small">Normal weather conditions. Standard face-to-face classes proceed as scheduled.</td>
+                                    <td class="fw-bold text-success"><i class="bi bi-check-circle-fill me-1"></i> 1. Hayo (Continue)</td>
+                                    <td class="text-secondary small">&lt; 7.5 mm/hr rain<br>&amp; &lt; 40 km/h wind</td>
+                                    <td><span class="badge bg-success px-3 py-2 w-100">IN-PERSON</span></td>
+                                    <td class="text-secondary small">Clear skies or very light, manageable weather. Standard classroom instruction proceeds exactly as scheduled.</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold text-dark">7.5 to 15.0 mm/hr</td>
-                                    <td><span class="badge bg-warning text-dark px-3 py-2">MODULAR</span></td>
-                                    <td class="text-secondary small">Moderate rainfall warning (Yellow Advisory equivalent). Transition to modular learning recommended.</td>
+                                    <td class="fw-bold text-warning text-dark"><i class="bi bi-book-half me-1"></i> 2. Hinay (Ease-in)</td>
+                                    <td class="text-secondary small">7.5 to 15.0 mm/hr rain<br>or &ge; 40 km/h wind</td>
+                                    <td><span class="badge bg-warning text-dark px-3 py-2 w-100">MODULAR</span></td>
+                                    <td class="text-secondary small">Mild weather disruptions. Shift to Alternative Delivery Modes (ADM). Deadlines are relaxed to accommodate intermittent power/internet.</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold text-danger">&gt; 15.0 mm/hr</td>
-                                    <td><span class="badge bg-danger px-3 py-2">SUSPENDED</span></td>
-                                    <td class="text-secondary small">Heavy rainfall / severe weather risk (Orange/Red Advisory equivalent). Classes automatically suspended for safety.</td>
+                                    <td class="fw-bold text-info text-dark"><i class="bi bi-heart-pulse-fill me-1"></i> 3. Hinga (Check-in)</td>
+                                    <td class="text-secondary small">Automatically triggered the day following a "Hinto" event.</td>
+                                    <td><span class="badge bg-info text-dark px-3 py-2 w-100">CHECK-IN</span></td>
+                                    <td class="text-secondary small">Aftermath of severe weather. Academics take a back seat. Role temporarily shifts to supportive anchor for Psychological First Aid (PFA).</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold text-danger"><i class="bi bi-x-octagon-fill me-1"></i> 4. Hinto (Stop)</td>
+                                    <td class="text-secondary small">&gt; 15.0 mm/hr rain<br>or &gt; 60 km/h wind</td>
+                                    <td><span class="badge bg-danger px-3 py-2 w-100">SUSPENDED</span></td>
+                                    <td class="text-secondary small">Severe weather threats to life and property. Complete operational halt. No face-to-face, no modules, no online activities. Focus is on survival.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -220,7 +230,7 @@
                     <i class="bi bi-shield-exclamation fs-3 text-warning mb-2 d-block"></i>
                     <h5 class="fw-bold text-dark mb-2">Institutional Disclaimer</h5>
                     <p class="small mb-0 mx-auto" style="max-width: 700px;">
-                        This system serves as an automated decision-support tool for Fermin Tayabas National High School administrators, teachers, parents, and students. While automated algorithms execute 15-minute evaluations, school administration retains full authority to enforce manual overrides during local emergencies or official DepEd orders.
+                        This system serves as an automated decision-support tool for Fermin Tayabas National High School administrators, teachers, parents, and students. While automated algorithms execute 10-minute evaluations synchronized with external triggers, school administration retains full authority to enforce manual 4H overrides during local emergencies or official DepEd orders.
                     </p>
                 </div>
             </div>
@@ -231,7 +241,7 @@
     <footer class="bg-white border-top py-3 mt-auto text-muted small">
         <div class="container text-center">
             <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">FTNHS Weather Hub</p>
-            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE LPT</span></p>
+            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
             <div class="d-flex justify-content-center flex-row flex-nowrap gap-2 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.68rem;">
                 <span class="text-nowrap"><i class="bi bi-server me-1"></i>Spring Boot</span>
                 <span class="text-nowrap"><i class="bi bi-cloud-sun me-1"></i>Open-Meteo</span>

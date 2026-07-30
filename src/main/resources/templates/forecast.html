@@ -152,9 +152,9 @@
             <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" th:if="${hourlyTimes != null and !hourlyTimes.isEmpty()}">
                 <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history me-2 text-secondary"></i>Hourly Timeline (Swipe Horizontally)</h5>
                 
-                <div class="timeline-scroll">
-                    <div class="card timeline-card border-0 bg-light text-center p-3" th:each="i : ${#numbers.sequence(0, hourlyTimes.size() - 1)}">
-                        <!-- Date Badge Added Here -->
+                <div class="timeline-scroll" id="forecastTimeline">
+                    <div class="card timeline-card border-0 bg-light text-center p-3" th:each="i : ${#numbers.sequence(0, hourlyTimes.size() - 1)}" th:attr="data-time=${hourlyTimes[i]}">
+                        <!-- Date Badge -->
                         <div class="badge bg-success bg-opacity-10 text-success mb-1 fw-bold py-1" style="font-size: 0.65rem;" th:text="${#strings.substring(hourlyTimes[i], 5, 10)}">05-26</div>
                         <div class="small fw-bold text-dark mb-2" th:text="${#strings.substring(hourlyTimes[i], 11, 16)}">00:00</div>
                         
@@ -168,9 +168,9 @@
 
                         <!-- Estimated Mode Badge -->
                         <div>
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] < 7.5}">IN-PERSON</span>
-                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] >= 7.5 and hourlyPrecip[i] <= 15.0}">MODULAR</span>
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] > 15.0}">SUSPENDED</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] < 7.5}">HAYO</span>
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] >= 7.5 and hourlyPrecip[i] <= 15.0}">HINAY</span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] > 15.0}">HINTO</span>
                         </div>
                     </div>
                 </div>
@@ -182,7 +182,7 @@
     <footer class="bg-white border-top py-3 mt-auto text-muted small">
         <div class="container text-center">
             <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">FTNHS Weather Hub</p>
-            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE LPT</span></p>
+            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
             <div class="d-flex justify-content-center flex-row flex-nowrap gap-2 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.68rem;">
                 <span class="text-nowrap"><i class="bi bi-server me-1"></i>Spring Boot</span>
                 <span class="text-nowrap"><i class="bi bi-cloud-sun me-1"></i>Open-Meteo</span>
@@ -194,5 +194,28 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script to filter forecast starting from the next hour based on Manila time -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
+            const now = new Date(nowStr);
+            
+            // Get the current hour marker in milliseconds (e.g. 9:00 PM)
+            const currentHourTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0).getTime();
+            
+            const cards = document.querySelectorAll('.timeline-card');
+            cards.forEach(card => {
+                const cardTimeStr = card.getAttribute('data-time');
+                if (cardTimeStr) {
+                    const cardTime = new Date(cardTimeStr).getTime();
+                    // Hide any past or current hour cards so it starts strictly at the next hour
+                    if (cardTime <= currentHourTime) {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
