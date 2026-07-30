@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTNHS Weather Hub | Analytics & Trends</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary-font: 'Inter', sans-serif;
+            --heading-font: 'Poppins', sans-serif;
+            --mono-font: 'Roboto Mono', monospace;
+        }
+        body {
+            font-family: var(--primary-font);
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .content-wrap {
+            flex: 1;
+        }
+        h1, h2, h3, h4, h5, h6, .navbar-brand {
+            font-family: var(--heading-font);
+        }
+        .weather-value {
+            font-family: var(--mono-font);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content-wrap">
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2"></i>FTNHS Weather Hub</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/forecast">Forecast</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/analytics">Analytics</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <a class="nav-link" href="/admin/diagnostics"><i class="bi bi-cpu me-1"></i>Diagnostics</a>
+                        </li>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <a class="nav-link" href="/admin/users"><i class="bi bi-people me-1"></i>Users</a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item" th:if="${!isAdminLoggedIn}">
+                            <a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right me-1"></i>Admin Login</a>
+                        </li>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <form action="/logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-light btn-sm mt-1"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container pb-5">
+            
+            <!-- Header Section -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Atmospheric Trends & Analytics</h2>
+                    <p class="text-muted small mb-0">Visual analysis of campus weather logs recorded by the automated decision system.</p>
+                </div>
+                <a href="/history/export" class="btn btn-outline-success fw-medium btn-sm mt-2 mt-md-0">
+                    <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export Raw CSV Data
+                </a>
+            </div>
+
+            <!-- Temperature Trend Chart Card -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-thermometer-half text-warning me-2"></i>Temperature Trend (°C)</h5>
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rainfall & Wind Speed Charts Row -->
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-rain text-primary me-2"></i>Rainfall Rate (mm/hr)</h5>
+                            <div style="position: relative; height: 280px; width: 100%;">
+                                <canvas id="rainChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-wind text-success me-2"></i>Wind Speed (km/h)</h5>
+                            <div style="position: relative; height: 280px; width: 100%;">
+                                <canvas id="windChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Professional Footer -->
+    <footer class="bg-white border-top py-4 mt-auto text-muted small">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold text-dark">FTNHS Weather Hub &bull; Fermin Tayabas National High School</p>
+            <p class="mb-2">Developed by <span class="text-primary fw-medium">Anthony Riel C. Diango</span> &bull; Programming Teacher</p>
+            <div class="d-flex justify-content-center flex-wrap gap-3 text-secondary opacity-75">
+                <span><i class="bi bi-server me-1"></i>Spring Boot</span>
+                <span><i class="bi bi-cloud-sun me-1"></i>Open-Meteo API</span>
+                <span><i class="bi bi-shield-check me-1"></i>Supabase</span>
+                <span><i class="bi bi-hdd-network me-1"></i>Render</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Chart.js Rendering Scripts -->
+    <script th:inline="javascript">
+        const labels = /*[[${timestamps}]]*/ [];
+        const tempData = /*[[${temperatures}]]*/ [];
+        const rainData = /*[[${precipitation}]]*/ [];
+        const windData = /*[[${windSpeeds}]]*/ [];
+
+        // Temperature Chart
+        const ctxTemp = document.getElementById('tempChart').getContext('2d');
+        new Chart(ctxTemp, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: tempData,
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Rainfall Chart
+        const ctxRain = document.getElementById('rainChart').getContext('2d');
+        new Chart(ctxRain, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Precipitation (mm/hr)',
+                    data: rainData,
+                    backgroundColor: '#0dcaf0',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Wind Speed Chart
+        const ctxWind = document.getElementById('windChart').getContext('2d');
+        new Chart(ctxWind, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Wind Speed (km/h)',
+                    data: windData,
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    </script>
+</body>
+</html>

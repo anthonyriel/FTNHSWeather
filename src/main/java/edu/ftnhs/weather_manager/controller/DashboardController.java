@@ -8,6 +8,7 @@ import edu.ftnhs.weather_manager.repository.LearningStatusLogRepository;
 import edu.ftnhs.weather_manager.repository.UserRepository;
 import edu.ftnhs.weather_manager.repository.WeatherLogRepository;
 import edu.ftnhs.weather_manager.service.WeatherDecisionEngine;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,12 +18,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClient;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.List;
 
 @Controller
@@ -31,16 +35,16 @@ public class DashboardController {
     private final WeatherLogRepository weatherLogRepository;
     private final LearningStatusLogRepository learningStatusLogRepository;
     private final UserRepository userRepository;
-    private final WeatherDecisionEngine weatherDecisionEngine; // Added back
+    private final WeatherDecisionEngine weatherDecisionEngine;
 
     public DashboardController(WeatherLogRepository weatherLogRepository, 
                                LearningStatusLogRepository learningStatusLogRepository,
                                UserRepository userRepository,
-                               WeatherDecisionEngine weatherDecisionEngine) { // Added back
+                               WeatherDecisionEngine weatherDecisionEngine) {
         this.weatherLogRepository = weatherLogRepository;
         this.learningStatusLogRepository = learningStatusLogRepository;
         this.userRepository = userRepository;
-        this.weatherDecisionEngine = weatherDecisionEngine; // Added back
+        this.weatherDecisionEngine = weatherDecisionEngine;
     }
 
     @GetMapping("/")
@@ -49,28 +53,74 @@ public class DashboardController {
         LocalDate today = LocalDate.now(phZone);
 
         WeatherLog latestLog = weatherLogRepository.findTopByOrderByTimestampDesc();
-        Optional<LearningStatusLog> todayOverride = learningStatusLogRepository.findTopByTargetDateOrderByCreatedAtDesc(today);
+        Optional<LearningStatusLog> todayStatus = learningStatusLogRepository.findTopByTargetDateOrderByCreatedAtDesc(today);
         
+        // Default values
         String currentMode = "IN_PERSON";
         String precipitation = "0.0";
         String temperature = "0.0";
         String windSpeed = "0.0";
+        String humidity = "0.0";
+        String cloudCover = "0";
+        String weatherCondition = "Clear";
         String lastUpdated = "Waiting for first cron job run...";
+
+        // Advanced Decision Variables
+        int confidenceScore = 0;
+        String riskLevel = "UNKNOWN";
+        String decisionReason = "Awaiting system analysis.";
+        String rainUsed = "0.0";
+        String windUsed = "0.0";
+
+        // Calculate Today's Summary Metrics (Highest Rain & Peak Wind)
+        double highestRainToday = 0.0;
+        double peakWindToday = 0.0;
+        List<WeatherLog> allLogs = weatherLogRepository.findAllByOrderByTimestampDesc();
+        for (WeatherLog logItem : allLogs) {
+            if (logItem.getTimestamp() != null) {
+                LocalDate logDate = logItem.getTimestamp().atZoneSameInstant(phZone).toLocalDate();
+                if (logDate.equals(today)) {
+                    if (logItem.getPrecipitationMm() > highestRainToday) {
+                        highestRainToday = logItem.getPrecipitationMm();
+                    }
+                    if (logItem.getWindSpeed() != null && logItem.getWindSpeed() > peakWindToday) {
+                        peakWindToday = logItem.getWindSpeed();
+                    }
+                }
+            }
+        }
 
         if (latestLog != null) {
             precipitation = String.valueOf(latestLog.getPrecipitationMm());
             temperature = String.valueOf(latestLog.getTemperature() != null ? latestLog.getTemperature() : 0.0);
             windSpeed = String.valueOf(latestLog.getWindSpeed() != null ? latestLog.getWindSpeed() : 0.0);
+            humidity = String.valueOf(latestLog.getHumidity() != null ? latestLog.getHumidity() : 0.0);
+            cloudCover = String.valueOf(latestLog.getCloudCover() != null ? latestLog.getCloudCover() : 0);
+            weatherCondition = latestLog.getWeatherCondition() != null ? latestLog.getWeatherCondition() : "Unknown";
             
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm a");
-            lastUpdated = latestLog.getTimestamp().format(formatter);
-            currentMode = latestLog.getWeatherCondition();
+            OffsetDateTime phTime = latestLog.getTimestamp().atZoneSameInstant(phZone).toOffsetDateTime();
+            lastUpdated = phTime.format(formatter);
         }
 
-        boolean hasActiveOverride = todayOverride.isPresent();
-        if (hasActiveOverride) {
-            currentMode = todayOverride.get().getStatus();
-            lastUpdated = "MANUAL OVERRIDE APPLIED"; 
+        boolean hasActiveOverride = false;
+
+        if (todayStatus.isPresent()) {
+            LearningStatusLog log = todayStatus.get();
+            currentMode = log.getStatus();
+            
+            confidenceScore = log.getConfidenceScore() != null ? log.getConfidenceScore().intValue() : 95;
+            riskLevel = log.getRiskLevel() != null ? log.getRiskLevel() : (currentMode.equals("IN_PERSON") ? "LOW" : "HIGH");
+            decisionReason = log.getReason() != null ? log.getReason() : "Learning mode updated based on current conditions.";
+            rainUsed = log.getRainfallUsed() != null ? String.valueOf(log.getRainfallUsed()) : precipitation;
+            windUsed = log.getWindUsed() != null ? String.valueOf(log.getWindUsed()) : windSpeed;
+
+            if (log.getAutomatedBySystem() != null && !log.getAutomatedBySystem()) {
+                hasActiveOverride = true;
+                lastUpdated = "MANUAL OVERRIDE APPLIED";
+                confidenceScore = 100;
+                riskLevel = "ADMIN FORCED";
+            }
         }
 
         String bannerClass = switch (currentMode) {
@@ -82,6 +132,7 @@ public class DashboardController {
 
         boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
 
+        // Base Data
         model.addAttribute("learningMode", currentMode);
         model.addAttribute("precipitation", precipitation);
         model.addAttribute("temperature", temperature);
@@ -90,6 +141,18 @@ public class DashboardController {
         model.addAttribute("bannerClass", bannerClass);
         model.addAttribute("hasActiveOverride", hasActiveOverride);
         model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
+
+        // Extended Data
+        model.addAttribute("humidity", humidity);
+        model.addAttribute("cloudCover", cloudCover);
+        model.addAttribute("weatherCondition", weatherCondition);
+        model.addAttribute("confidenceScore", confidenceScore);
+        model.addAttribute("riskLevel", riskLevel);
+        model.addAttribute("decisionReason", decisionReason);
+        model.addAttribute("rainUsed", rainUsed);
+        model.addAttribute("windUsed", windUsed);
+        model.addAttribute("highestRainToday", highestRainToday);
+        model.addAttribute("peakWindToday", peakWindToday);
 
         return "dashboard"; 
     }
@@ -133,7 +196,7 @@ public class DashboardController {
         manualLog.setStatus(overrideMode);
         manualLog.setAutomatedBySystem(false);
         manualLog.setReason("Admin forced manual override via Dashboard");
-        manualLog.setCreatedAt(LocalDateTime.now(phZone));
+        manualLog.setCreatedAt(OffsetDateTime.now(phZone));
         
         learningStatusLogRepository.save(manualLog);
         return "redirect:/"; 
@@ -235,12 +298,205 @@ public class DashboardController {
     // Public past weather logs history endpoint
     @GetMapping("/history")
     public String viewWeatherHistory(Model model, HttpSession session) {
-        List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc();
+        ZoneId phZone = ZoneId.of("Asia/Manila");
+        
+        List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc()
+            .stream()
+            .map(log -> {
+                if (log.getTimestamp() != null) {
+                    OffsetDateTime manilaTime = log.getTimestamp()
+                            .atZoneSameInstant(phZone)
+                            .toOffsetDateTime();
+                    log.setTimestamp(manilaTime);
+                }
+                return log;
+            })
+            .collect(Collectors.toList());
+
         model.addAttribute("weatherLogs", logs);
         
         boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
         model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
         
         return "history"; // Renders history.html
+    }
+
+    // Official Printable Daily Report for DepEd
+    @GetMapping("/report/daily")
+    public String viewDailyReport(Model model, HttpSession session) {
+        ZoneId phZone = ZoneId.of("Asia/Manila");
+        LocalDate today = LocalDate.now(phZone);
+
+        Optional<LearningStatusLog> todayStatus = learningStatusLogRepository.findTopByTargetDateOrderByCreatedAtDesc(today);
+        WeatherLog latestLog = weatherLogRepository.findTopByOrderByTimestampDesc();
+
+        String currentMode = "IN_PERSON";
+        String reason = "Normal operating conditions maintained across campus.";
+        String riskLevel = "LOW";
+
+        if (todayStatus.isPresent()) {
+            LearningStatusLog log = todayStatus.get();
+            if (log.getStatus() != null) currentMode = log.getStatus();
+            if (log.getReason() != null) reason = log.getReason();
+            if (log.getRiskLevel() != null) riskLevel = log.getRiskLevel();
+        }
+
+        // Calculate today's highest rain and peak wind
+        double highestRain = 0.0;
+        double peakWind = 0.0;
+        List<WeatherLog> allLogs = weatherLogRepository.findAllByOrderByTimestampDesc();
+        for (WeatherLog log : allLogs) {
+            if (log.getTimestamp() != null && log.getTimestamp().atZoneSameInstant(phZone).toLocalDate().equals(today)) {
+                if (log.getPrecipitationMm() > highestRain) {
+                    highestRain = log.getPrecipitationMm();
+                }
+                if (log.getWindSpeed() != null && log.getWindSpeed() > peakWind) {
+                    peakWind = log.getWindSpeed();
+                }
+            }
+        }
+
+        model.addAttribute("reportDate", today.format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")));
+        model.addAttribute("currentMode", currentMode);
+        model.addAttribute("reason", reason);
+        model.addAttribute("riskLevel", riskLevel);
+        model.addAttribute("highestRain", highestRain);
+        model.addAttribute("peakWind", peakWind);
+        model.addAttribute("latestTemp", latestLog != null && latestLog.getTemperature() != null ? latestLog.getTemperature() : 0.0);
+        model.addAttribute("latestHumidity", latestLog != null && latestLog.getHumidity() != null ? latestLog.getHumidity() : 0.0);
+        model.addAttribute("generatedTimestamp", OffsetDateTime.now(phZone).format(DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm a")));
+
+        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
+        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
+
+        return "daily-report";
+    }
+
+    // Weather Analytics & Trends Dashboard Endpoint
+    @GetMapping("/analytics")
+    public String viewAnalytics(Model model, HttpSession session) {
+        ZoneId phZone = ZoneId.of("Asia/Manila");
+        
+        List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc();
+        
+        // Reverse to chronological order for charts (oldest to newest)
+        List<WeatherLog> chronologicalLogs = logs.stream()
+                .sorted((a, b) -> a.getTimestamp().compareTo(b.getTimestamp()))
+                .collect(Collectors.toList());
+
+        List<String> timestamps = chronologicalLogs.stream()
+                .map(log -> log.getTimestamp() != null ? log.getTimestamp().atZoneSameInstant(phZone).format(DateTimeFormatter.ofPattern("MMM dd HH:mm")) : "")
+                .collect(Collectors.toList());
+
+        List<Double> temperatures = chronologicalLogs.stream()
+                .map(log -> log.getTemperature() != null ? log.getTemperature() : 0.0)
+                .collect(Collectors.toList());
+
+        List<Double> precipitation = chronologicalLogs.stream()
+                .map(log -> log.getPrecipitationMm())
+                .collect(Collectors.toList());
+
+        List<Double> windSpeeds = chronologicalLogs.stream()
+                .map(log -> log.getWindSpeed() != null ? log.getWindSpeed() : 0.0)
+                .collect(Collectors.toList());
+
+        model.addAttribute("timestamps", timestamps);
+        model.addAttribute("temperatures", temperatures);
+        model.addAttribute("precipitation", precipitation);
+        model.addAttribute("windSpeeds", windSpeeds);
+        
+        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
+        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
+
+        return "analytics"; // Renders analytics.html
+    }
+
+    // System Diagnostics & Health Status (Admin Only)
+    @GetMapping("/admin/diagnostics")
+    public String viewDiagnostics(Model model, HttpSession session) {
+        if (session.getAttribute("adminUser") == null) return "redirect:/login";
+
+        ZoneId phZone = ZoneId.of("Asia/Manila");
+        
+        long totalWeatherLogs = weatherLogRepository.count();
+        long totalUsers = userRepository.count();
+        long totalStatusLogs = learningStatusLogRepository.count();
+
+        WeatherLog latestLog = weatherLogRepository.findTopByOrderByTimestampDesc();
+        String lastLogTime = "No records found";
+        if (latestLog != null && latestLog.getTimestamp() != null) {
+            lastLogTime = latestLog.getTimestamp().atZoneSameInstant(phZone)
+                    .format(DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm:ss a"));
+        }
+
+        // Test Open-Meteo API Connectivity
+        boolean apiConnected = false;
+        String apiResponseMsg = "OK";
+        RestClient restClient = RestClient.create();
+        String testUrl = "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&current=temperature_2m,precipitation,wind_speed_10m&timezone=auto";
+        
+        try {
+            String response = restClient.get().uri(testUrl).retrieve().body(String.class);
+            if (response != null && !response.isEmpty()) {
+                apiConnected = true;
+            }
+        } catch (Exception e) {
+            apiResponseMsg = "Error: " + e.getMessage();
+        }
+
+        model.addAttribute("totalWeatherLogs", totalWeatherLogs);
+        model.addAttribute("totalUsers", totalUsers);
+        model.addAttribute("totalStatusLogs", totalStatusLogs);
+        model.addAttribute("lastLogTime", lastLogTime);
+        model.addAttribute("apiConnected", apiConnected);
+        model.addAttribute("apiResponseMsg", apiResponseMsg);
+        model.addAttribute("serverTime", OffsetDateTime.now(phZone).format(DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm:ss a")));
+
+        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
+        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
+
+        return "diagnostics"; // Renders diagnostics.html
+    }
+
+    // Public About endpoint
+    @GetMapping("/about")
+    public String viewAbout(Model model, HttpSession session) {
+        boolean isAdminLoggedIn = session.getAttribute("adminUser") != null;
+        model.addAttribute("isAdminLoggedIn", isAdminLoggedIn);
+        return "about"; // Renders about.html
+    }
+
+    // Export Weather Logs as CSV
+    @GetMapping("/history/export")
+    public void exportWeatherLogsCsv(HttpServletResponse response, HttpSession session) throws IOException {
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=ftnhs_weather_logs_" + LocalDate.now() + ".csv");
+
+        List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc();
+        ZoneId phZone = ZoneId.of("Asia/Manila");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        try (PrintWriter writer = response.getWriter()) {
+            writer.println("Timestamp (PST),Location,Condition / Learning Mode,Temperature (°C),Rainfall (mm/hr),Wind Speed (km/h),Humidity (%),Cloud Cover (%)");
+
+            for (WeatherLog log : logs) {
+                String timeStr = "";
+                if (log.getTimestamp() != null) {
+                    timeStr = log.getTimestamp().atZoneSameInstant(phZone).format(formatter);
+                }
+
+                writer.printf("\"%s\",\"%s\",\"%s\",%.1f,%.1f,%.1f,%.1f,%d%n",
+                    timeStr,
+                    log.getLocation() != null ? log.getLocation() : "Campus",
+                    log.getWeatherCondition() != null ? log.getWeatherCondition() : "N/A",
+                    log.getTemperature() != null ? log.getTemperature() : 0.0,
+                    log.getPrecipitationMm(),
+                    log.getWindSpeed() != null ? log.getWindSpeed() : 0.0,
+                    log.getHumidity() != null ? log.getHumidity() : 0.0,
+                    log.getCloudCover() != null ? log.getCloudCover() : 0
+                );
+            }
+            writer.flush();
+        }
     }
 }

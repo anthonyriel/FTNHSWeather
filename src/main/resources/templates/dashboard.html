@@ -1,209 +1,468 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Weather School Hub</title>
+    <title>FTNHS Weather Hub | Dashboard</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-font: 'Inter', sans-serif;
+            --heading-font: 'Poppins', sans-serif;
+            --mono-font: 'Roboto Mono', monospace;
+        }
+        body {
+            font-family: var(--primary-font);
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .content-wrap {
+            flex: 1;
+        }
+        h1, h2, h3, h4, h5, h6, .navbar-brand {
+            font-family: var(--heading-font);
+        }
+        .weather-value {
+            font-family: var(--mono-font);
+            letter-spacing: -0.5px;
+        }
+        .letter-spacing-1 {
+            letter-spacing: 1px;
+        }
+        .stat-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 16px;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+        }
+        .bg-success { background-color: #198754 !important; }
+        .bg-warning { background-color: #ffc107 !important; }
+        .bg-danger { background-color: #dc3545 !important; }
+        
+        @keyframes pulse-alert {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.01); }
+            100% { transform: scale(1); }
+        }
+        .alert-pulse {
+            animation: pulse-alert 2s infinite;
+        }
+        .ai-panel {
+            border-left: 5px solid #0d6efd;
+        }
+    </style>
 </head>
-<body class="bg-light d-flex flex-column min-vh-100">
+<body>
 
-    <!-- Responsive Navbar with Always-On Hamburger & Offcanvas Drawer -->
-    <nav class="navbar navbar-dark bg-dark shadow">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/">
-                <i class="bi bi-cloud-rain-fill text-info me-2"></i> FTNHS Weather Hub
-            </a>
-            
-            <!-- Hamburger Button (Active on All Screen Sizes) -->
-            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <!-- Offcanvas Sliding Drawer -->
-            <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header border-bottom border-secondary">
-                    <h5 class="offcanvas-title fw-bold" id="offcanvasNavbarLabel">
-                        <i class="bi bi-cloud-rain-fill text-info me-2"></i> Navigation Menu
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body d-flex flex-column justify-content-between p-4">
-                    <ul class="navbar-nav gap-2">
-                        <li class="nav-item">
-                            <a href="/forecast" class="btn btn-outline-secondary btn-sm fw-bold w-100 text-start text-white py-2">
-                                <i class="bi bi-calendar-range me-2"></i> View Forecast
-                            </a>
+    <div class="content-wrap">
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2"></i>FTNHS Weather Hub</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link active" href="/">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/forecast">Forecast</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/analytics">Analytics</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <a class="nav-link" href="/admin/diagnostics"><i class="bi bi-cpu me-1"></i>Diagnostics</a>
                         </li>
-                        <li class="nav-item">
-                            <a href="/history" class="btn btn-outline-secondary btn-sm fw-bold w-100 text-start text-white py-2">
-                                <i class="bi bi-clock-history me-2"></i> Weather History
-                            </a>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <a class="nav-link" href="/admin/users"><i class="bi bi-people me-1"></i>Users</a>
                         </li>
                     </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item" th:if="${!isAdminLoggedIn}">
+                            <a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right me-1"></i>Admin Login</a>
+                        </li>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <form action="/logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-light btn-sm mt-1"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container pb-5">
+            
+            <!-- Manual Override Active Notice -->
+            <div class="alert border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center p-3 bg-dark text-white" 
+                 role="alert" 
+                 th:if="${hasActiveOverride}">
+                <div class="bg-danger p-3 rounded-3 me-3 text-white fs-3">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1 text-warning">🔒 Admin Manual Override Active</h5>
+                    <p class="mb-0 text-light small">
+                        System evaluation is currently locked by an administrator override. Automated updates are paused until reverted to automatic mode.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Dynamic Rain Alert Banner -->
+            <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center alert-pulse p-4" 
+                 role="alert" 
+                 th:if="${rainUsed != null and T(java.lang.Double).parseDouble(rainUsed) >= 7.5}">
+                <div class="bg-warning bg-opacity-25 p-3 rounded-3 me-3 text-dark fs-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1 text-dark">⚠️ Heavy Rainfall Advisory Detected</h5>
+                    <p class="mb-0 text-secondary small">
+                        Current recorded precipitation is <strong class="weather-value" th:text="${rainUsed} + ' mm/hr'"></strong>. Weather thresholds have reached critical levels; learning mode is subject to automated modification or suspension.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Status Banner -->
+            <div class="card border-0 shadow-lg mb-4 rounded-4 text-white" th:classappend="${bannerClass}">
+                <div class="card-body p-4 p-md-5 position-relative">
                     
-                    <!-- Admin Authentication & Management Section -->
-                    <div class="border-top border-secondary pt-3 mt-auto">
-                        <div th:unless="${isAdminLoggedIn}">
-                            <a href="/login" class="btn btn-outline-light btn-sm fw-bold w-100 py-2">
-                                <i class="bi bi-box-arrow-in-right me-2"></i> Admin Login
-                            </a>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <div class="text-uppercase small fw-bold opacity-75 letter-spacing-1">
+                            <i class="bi bi-building me-1"></i> Fermin Tayabas National High School
                         </div>
-                        <div th:if="${isAdminLoggedIn}" class="d-flex flex-column gap-2">
-                            <div class="text-white small px-1 mb-1">
-                                <i class="bi bi-person-circle text-info me-1"></i> Logged in as <strong th:text="${session.adminName}">Admin</strong>
+                        <div class="small fw-medium bg-dark bg-opacity-25 px-3 py-1 rounded-pill weather-value">
+                            <i class="bi bi-clock me-1"></i> <span id="liveClock">Loading system time...</span>
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <h5 class="fw-bold opacity-75 mb-2">Today's Learning Mode</h5>
+                            <h1 class="display-4 fw-bolder mb-3 d-flex align-items-center gap-3">
+                                <span th:if="${learningMode == 'IN_PERSON'}"><i class="bi bi-check-circle-fill"></i> IN-PERSON</span>
+                                <span th:if="${learningMode == 'MODULAR'}"><i class="bi bi-exclamation-triangle-fill"></i> MODULAR</span>
+                                <span th:if="${learningMode == 'SUSPENDED'}"><i class="bi bi-x-octagon-fill"></i> SUSPENDED</span>
+                            </h1>
+                            <p class="fs-5 mb-0 opacity-100 fw-medium" th:text="${decisionReason}">Status updated based on current conditions.</p>
+                        </div>
+
+                        <div class="col-md-5 mt-4 mt-md-0 text-md-end">
+                            <div class="bg-dark bg-opacity-25 rounded-3 p-3 d-inline-block text-start w-100" style="max-width: 310px;">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="small fw-bold text-uppercase">Decision Confidence</span>
+                                    <span class="small fw-bold weather-value" th:text="${confidenceScore} + '%'">0%</span>
+                                </div>
+                                <div class="progress mb-2" style="height: 6px; background-color: rgba(255,255,255,0.2);">
+                                    <div class="progress-bar bg-white" role="progressbar" th:style="'width: ' + ${confidenceScore} + '%'"></div>
+                                </div>
+                                <div class="small fw-medium mb-2">
+                                    <i class="bi bi-clock-history me-1"></i> Last Evaluation: <br>
+                                    <span class="opacity-75" th:text="${lastUpdated}"></span>
+                                </div>
+                                <hr class="border-light opacity-25 my-2">
+                                <div class="small fw-medium text-warning">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Next Auto-Update: <span id="countdownTimer" class="fw-bold weather-value">--</span>
+                                </div>
                             </div>
-                            <a href="/admin/users" class="btn btn-outline-warning btn-sm fw-bold w-100 text-start py-2">
-                                <i class="bi bi-people-fill me-2"></i> Manage Accounts
-                            </a>
-                            <form action="/logout" method="POST" class="w-100">
-                                <button type="submit" class="btn btn-outline-danger btn-sm fw-bold w-100 text-start py-2">
-                                    <i class="bi bi-box-arrow-right me-2"></i> Logout
-                                </button>
-                            </form>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </nav>
 
-    <div class="container mt-4 flex-grow-1">
-        
-        <!-- Dynamic Status Banner with Fully Responsive Flexbox Header -->
-        <div class="card text-white mb-4 shadow border-0" th:classappend="${bannerClass}">
-            <div class="card-body text-center p-4 p-md-5">
+            <!-- Dashboard Summary Mini Cards (Recommendation #8) -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-cloud-rain me-1 text-primary"></i> Highest Rain Today</div>
+                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${highestRainToday} + ' mm/hr'">0.0 mm/hr</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-wind me-1 text-success"></i> Peak Wind Today</div>
+                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${peakWindToday} + ' km/h'">0.0 km/h</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-thermometer-half me-1 text-warning"></i> Temperature</div>
+                        <div class="fs-5 fw-bold text-dark weather-value" th:text="${temperature} + ' °C'">0.0 °C</div>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 h-100 bg-white">
+                        <div class="small text-muted fw-bold text-uppercase mb-1"><i class="bi bi-shield-check me-1 text-info"></i> Today's Status</div>
+                        <div class="fs-6 fw-bold text-primary mt-1" th:text="${learningMode}">IN_PERSON</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Decision Explanation Panel -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 ai-panel">
+                <div class="card-body p-4 p-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary fs-4">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">AI Decision Analysis & Breakdown</h5>
+                            <p class="text-muted small mb-0">Real-time evaluation rules applied by the automated decision engine.</p>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 align-items-center bg-light p-3 rounded-3">
+                        <div class="col-md-7">
+                            <ul class="list-unstyled mb-0 small text-secondary">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <strong>Rainfall Rate:</strong> <span class="weather-value" th:text="${rainUsed} + ' mm/hr'">0.0 mm/hr</span> 
+                                    <span class="text-muted" th:text="${T(java.lang.Double).parseDouble(rainUsed) > 15.0 ? '(Exceeds suspension threshold)' : (T(java.lang.Double).parseDouble(rainUsed) >= 7.5 ? '(Exceeds modular threshold)' : '(Below suspension threshold)')}">(Safe)</span>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <strong>Wind Speed:</strong> <span class="weather-value" th:text="${windUsed} + ' km/h'">0.0 km/h</span> (Normal operating range)
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <strong>Ambient Temperature:</strong> <span class="weather-value" th:text="${temperature} + ' °C'">0.0 °C</span> (Within safe limits)
+                                </li>
+                                <li>
+                                    <i class="bi bi-shield-fill-check text-primary me-2"></i>
+                                    <strong>Overall Assessed Risk Level:</strong> <span class="fw-bold text-dark" th:text="${riskLevel}">LOW</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-5 text-md-end border-start-md ps-md-4">
+                            <div class="text-uppercase text-muted small fw-bold mb-1">Recommended Mode</div>
+                            <h4 class="fw-bolder text-primary mb-0" th:text="${learningMode}">IN_PERSON</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comprehensive Weather Metrics Grid -->
+            <div class="mb-3">
+                <h4 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-sun me-2 text-primary"></i>Current Meteorological Metrics</h4>
+            </div>
+            
+            <div class="row g-4 mb-4">
                 
-                <!-- Top Row: Title & Live Clock Badge (Scales perfectly on mobile & desktop) -->
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3 gap-2">
-                    <h5 class="card-title fw-bold text-uppercase opacity-75 mb-0">Today's Learning Status</h5>
-                    <span id="liveClock" class="badge bg-dark bg-opacity-50 text-light border border-light border-opacity-25 px-3 py-2 shadow-sm fs-6">
-                        Loading time...
-                    </span>
-                </div>
-
-                <h1 class="display-4 display-md-3 fw-bolder mb-2" th:text="${learningMode}">IN_PERSON</h1>
-                
-                <p class="mt-3 mb-1 fw-medium small fs-md-6">
-                    <i class="bi bi-clock-history me-1"></i> Last automated weather update: 
-                    <span th:text="${lastUpdated}" class="fw-bold text-decoration-underline">Waiting for first cron job run...</span>
-                </p>
-                <p class="small opacity-75 mb-0">
-                    <i class="bi bi-arrow-repeat me-1"></i> Automated weather checks run every 15 minutes.
-                </p>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            <!-- Live Metrics -->
-            <div class="col-lg-8">
-                <h4 class="mb-3 text-secondary">Local Conditions</h4>
-                <div class="row text-center g-3">
-                    <div class="col-12 col-md-4">
-                        <div class="card shadow-sm h-100 border-0">
-                            <div class="card-body py-4">
-                                <h1 class="text-primary mb-3"><i class="bi bi-droplet-fill"></i></h1>
-                                <h3 class="fw-bold" th:text="${precipitation} + ' mm/hr'">0.0 mm/hr</h3>
-                                <p class="text-muted small text-uppercase mb-0">Precipitation</p>
+                <!-- Weather Condition Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm stat-card h-100">
+                        <div class="card-body p-4 d-flex align-items-center">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3 text-primary fs-3">
+                                <i class="bi bi-cloud-sun-fill" th:if="${weatherCondition == 'Clear' or weatherCondition == 'Sunny'}"></i>
+                                <i class="bi bi-cloud-rain-fill" th:if="${weatherCondition != 'Clear' and weatherCondition != 'Sunny'}"></i>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="card shadow-sm h-100 border-0">
-                            <div class="card-body py-4">
-                                <h1 class="text-danger mb-3"><i class="bi bi-thermometer-half"></i></h1>
-                                <h3 class="fw-bold" th:text="${temperature} + ' &deg;C'">27.5 &deg;C</h3>
-                                <p class="text-muted small text-uppercase mb-0">Temperature</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="card shadow-sm h-100 border-0">
-                            <div class="card-body py-4">
-                                <h1 class="text-info mb-3"><i class="bi bi-wind"></i></h1>
-                                <h3 class="fw-bold" th:text="${windSpeed} + ' km/h'">12.0 km/h</h3>
-                                <p class="text-muted small text-uppercase mb-0">Wind Speed</p>
+                            <div>
+                                <div class="small text-muted fw-bold text-uppercase">Weather Condition</div>
+                                <div class="fw-bold fs-5 text-dark" th:text="${weatherCondition}">Clear</div>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-1 small">Live Feed</span>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Temperature Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm stat-card h-100">
+                        <div class="card-body p-4 d-flex align-items-center">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded-4 me-3 text-warning fs-3">
+                                <i class="bi bi-thermometer-half"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted fw-bold text-uppercase">Temperature</div>
+                                <div class="fw-bold fs-5 text-dark weather-value" th:text="${temperature} + ' °C'">0.0 °C</div>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-1 small">Normal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rainfall Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm stat-card h-100">
+                        <div class="card-body p-4 d-flex align-items-center">
+                            <div class="bg-info bg-opacity-10 p-3 rounded-4 me-3 text-info fs-3">
+                                <i class="bi bi-cloud-rain"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted fw-bold text-uppercase">Rainfall Rate</div>
+                                <div class="fw-bold fs-5 text-dark weather-value" th:text="${rainUsed} + ' mm/hr'">0.0 mm/hr</div>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-1 small" th:if="${T(java.lang.Double).parseDouble(rainUsed) == 0.0}">No Rain</span>
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 mt-1 small" th:if="${T(java.lang.Double).parseDouble(rainUsed) > 0.0 and T(java.lang.Double).parseDouble(rainUsed) < 7.5}">Light Rain</span>
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 mt-1 small" th:if="${T(java.lang.Double).parseDouble(rainUsed) >= 7.5}">Heavy Rain</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wind Speed Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm stat-card h-100">
+                        <div class="card-body p-4 d-flex align-items-center">
+                            <div class="bg-success bg-opacity-10 p-3 rounded-4 me-3 text-success fs-3">
+                                <i class="bi bi-wind"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted fw-bold text-uppercase">Wind Speed</div>
+                                <div class="fw-bold fs-5 text-dark weather-value" th:text="${windUsed} + ' km/h'">0.0 km/h</div>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-1 small">Calm & Safe</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Humidity Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm stat-card h-100">
+                        <div class="card-body p-4 d-flex align-items-center">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3 text-primary fs-3">
+                                <i class="bi bi-droplet-half"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted fw-bold text-uppercase">Relative Humidity</div>
+                                <div class="fw-bold fs-5 text-dark weather-value" th:text="${humidity} + '%'">0%</div>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-1 small">Atmospheric</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cloud Cover Card -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm stat-card h-100">
+                        <div class="card-body p-4 d-flex align-items-center">
+                            <div class="bg-secondary bg-opacity-10 p-3 rounded-4 me-3 text-secondary fs-3">
+                                <i class="bi bi-clouds"></i>
+                            </div>
+                            <div>
+                                <div class="small text-muted fw-bold text-uppercase">Cloud Cover</div>
+                                <div class="fw-bold fs-5 text-dark weather-value" th:text="${cloudCover} + '%'">0%</div>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-1 small">Sky Status</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Admin Controls -->
-            <div class="col-lg-4">
-                <h4 class="mb-3 text-secondary">System Override</h4>
-                <div class="card shadow-sm border-0 border-top border-danger border-4">
-                    <div class="card-body p-4">
-                        
-                        <!-- IF AN OVERRIDE IS ACTIVE: Show active status warning and Revert Button -->
-                        <div th:if="${hasActiveOverride}">
-                            <div class="alert alert-warning py-2 small mb-3">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>Manual Override Active:</strong> System is locked to this status.
-                            </div>
-                            <form action="/admin/revert-automatic" method="POST">
-                                <button type="submit" class="btn btn-outline-secondary w-100 fw-bold mb-3">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Revert to Weather Automation
-                                </button>
-                            </form>
-                            <hr class="text-muted">
-                            <p class="text-muted small mb-2">Or change to another manual override:</p>
-                        </div>
+            <!-- Official DepEd Daily Report Quick Link (Only visible to Admin) -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
+                <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1"><i class="bi bi-file-earmark-pdf me-2 text-primary"></i>Official DepEd Daily Report</h5>
+                        <p class="text-muted small mb-0">Generate, view, and print official incident and weather evaluation reports for archiving.</p>
+                    </div>
+                    <a href="/report/daily" class="btn btn-outline-primary fw-medium px-4" target="_blank">
+                        <i class="bi bi-printer me-2"></i>View Official Report
+                    </a>
+                </div>
+            </div>
 
-                        <!-- Standard Override Form -->
-                        <p class="text-muted small mb-4" th:unless="${hasActiveOverride}">Manually override the API's automated decision for today's classes.</p>
-                        
-                        <form action="/admin/override" method="POST">
-                            <div class="mb-3">
-                                <select class="form-select bg-light" name="overrideMode" required>
-                                    <option value="" selected disabled>Select new status...</option>
-                                    <option value="IN_PERSON">Force: In-Person Classes</option>
-                                    <option value="MODULAR">Force: Modular Learning</option>
-                                    <option value="SUSPENDED">Force: Complete Suspension</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-danger w-100 fw-bold">
-                                <i class="bi bi-shield-lock me-1"></i> Apply Override
-                            </button>
+            <!-- Admin Override Controls (Only visible to Admin) -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4" th:if="${isAdminLoggedIn}">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-sliders me-2"></i>Manual Override</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <form action="/admin/override" method="post" class="d-inline">
+                            <input type="hidden" name="overrideMode" value="IN_PERSON">
+                            <button type="submit" class="btn btn-outline-success fw-medium"><i class="bi bi-check-circle me-1"></i>Force In-Person</button>
+                        </form>
+                        <form action="/admin/override" method="post" class="d-inline">
+                            <input type="hidden" name="overrideMode" value="MODULAR">
+                            <button type="submit" class="btn btn-outline-warning text-dark fw-medium"><i class="bi bi-exclamation-triangle me-1"></i>Force Modular</button>
+                        </form>
+                        <form action="/admin/override" method="post" class="d-inline">
+                            <input type="hidden" name="overrideMode" value="SUSPENDED">
+                            <button type="submit" class="btn btn-outline-danger fw-medium"><i class="bi bi-x-octagon me-1"></i>Force Suspended</button>
+                        </form>
+                        <form action="/admin/revert-automatic" method="post" class="d-inline ms-auto">
+                            <button type="submit" class="btn btn-secondary fw-medium"><i class="bi bi-arrow-counterclockwise me-1"></i>Revert to Automatic</button>
                         </form>
                     </div>
                 </div>
             </div>
+            
         </div>
     </div>
 
-    <!-- Footer Credit -->
-    <footer class="bg-dark text-white text-center py-3 mt-5 shadow-sm">
-        <div class="container">
-            <p class="small mb-0 text-white-50">
-                &copy; 2026 <strong class="text-light">Anthony Riel C. Diango CpE, LPT</strong>.
-            </p>
+    <!-- Professional Footer -->
+    <footer class="bg-white border-top py-4 mt-auto text-muted small">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold text-dark">FTNHS Weather Hub &bull; Fermin Tayabas National High School</p>
+            <p class="mb-2">Developed by <span class="text-primary fw-medium">Anthony Riel C. Diango</span> &bull; Programming Teacher</p>
+            <div class="d-flex justify-content-center flex-wrap gap-3 text-secondary opacity-75">
+                <span><i class="bi bi-server me-1"></i>Spring Boot</span>
+                <span><i class="bi bi-cloud-sun me-1"></i>Open-Meteo API</span>
+                <span><i class="bi bi-shield-check me-1"></i>Supabase</span>
+                <span><i class="bi bi-hdd-network me-1"></i>Render</span>
+            </div>
         </div>
     </footer>
 
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Real-Time Clock Script -->
+
+    <!-- Real-Time System Clock & Countdown Timer Script -->
     <script>
-        function updateClock() {
-            const now = new Date();
-            const timeString = now.toLocaleString('en-PH', { 
+        function updateSystemClock() {
+            const options = {
                 timeZone: 'Asia/Manila',
-                weekday: 'short', 
-                month: 'short', 
-                day: 'numeric', 
+                weekday: 'short',
                 year: 'numeric',
-                hour: '2-digit', 
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
                 minute: '2-digit',
-                second: '2-digit'
-            });
-            
-            const clockElement = document.getElementById('liveClock');
-            if (clockElement) clockElement.textContent = timeString;
+                second: '2-digit',
+                hour12: true
+            };
+            const formatter = new Intl.DateTimeFormat('en-US', options);
+            document.getElementById('liveClock').innerText = formatter.format(new Date());
         }
-        
-        setInterval(updateClock, 1000);
-        updateClock(); 
+
+        function updateCountdown() {
+            const now = new Date();
+            const manilaTimeStr = now.toLocaleString("en-US", { timeZone: "Asia/Manila" });
+            const manilaDate = new Date(manilaTimeStr);
+            
+            const minutes = manilaDate.getMinutes();
+            const seconds = manilaDate.getSeconds();
+            
+            const currentTotalSeconds = minutes * 60 + seconds;
+            let nextIntervalSeconds = Math.ceil(currentTotalSeconds / 900) * 900;
+            if (nextIntervalSeconds === currentTotalSeconds) {
+                nextIntervalSeconds += 900;
+            }
+            
+            let diffSeconds = nextIntervalSeconds - currentTotalSeconds;
+            if (diffSeconds < 0) diffSeconds = 0;
+            
+            const m = Math.floor(diffSeconds / 60);
+            const s = diffSeconds % 60;
+            
+            document.getElementById('countdownTimer').innerText = `${m}m ${s < 10 ? '0' : ''}${s}s`;
+        }
+
+        setInterval(() => {
+            updateSystemClock();
+            updateCountdown();
+        }, 1000);
+
+        updateSystemClock();
+        updateCountdown();
     </script>
 </body>
 </html>

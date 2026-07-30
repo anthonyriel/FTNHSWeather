@@ -1,203 +1,152 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advance Weather Forecast - FTNHS Weather Hub</title>
+    <title>Weather Forecast | FTNHS Weather Hub</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-font: 'Inter', sans-serif;
+            --heading-font: 'Poppins', sans-serif;
+            --mono-font: 'Roboto Mono', monospace;
+        }
+        body {
+            font-family: var(--primary-font);
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .content-wrap {
+            flex: 1;
+        }
+        h1, h2, h3, h4, h5, h6, .navbar-brand {
+            font-family: var(--heading-font);
+        }
+        .metric-value {
+            font-family: var(--mono-font);
+        }
+        /* Horizontal scrollable timeline container */
+        .timeline-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            scroll-behavior: smooth;
+        }
+        .timeline-card {
+            min-width: 140px;
+            flex: 0 0 auto;
+            border-radius: 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .timeline-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
-    <!-- Navbar with Public Link -->
-    <nav class="navbar navbar-dark bg-dark shadow">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/">
-                <i class="bi bi-cloud-rain-fill text-info me-2"></i> FTNHS Weather Hub
-            </a>
-            <div class="d-flex align-items-center">
-                <a href="/" class="btn btn-outline-light btn-sm fw-bold me-3">
-                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                </a>
+    <div class="content-wrap">
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+            <div class="container">
+                <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2"></i>FTNHS Weather Hub</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" href="/">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/forecast">Forecast</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/analytics">Analytics</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <a class="nav-link" href="/admin/diagnostics"><i class="bi bi-cpu me-1"></i>Diagnostics</a>
+                        </li>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <a class="nav-link" href="/admin/users"><i class="bi bi-people me-1"></i>Users</a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item" th:if="${!isAdminLoggedIn}">
+                            <a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right me-1"></i>Admin Login</a>
+                        </li>
+                        <li class="nav-item" th:if="${isAdminLoggedIn}">
+                            <form action="/logout" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-light btn-sm mt-1"><i class="bi bi-box-arrow-right me-1"></i>Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container pb-5">
+            
+            <div class="mb-4">
+                <h2 class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>24-Hour Advance Forecast</h2>
+                <p class="text-muted">Hourly meteorological projections and simulated modal evaluations for Fermin Tayabas National High School.</p>
+            </div>
+
+            <!-- Error Banner if API fails -->
+            <div class="alert alert-danger border-0 shadow-sm rounded-4" th:if="${error != null}" th:text="${error}">
+                Unable to load forecast data.
+            </div>
+
+            <!-- Timeline Cards Grid (Horizontal Swipe on Mobile) -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" th:if="${hourlyTimes != null and !hourlyTimes.isEmpty()}">
+                <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-clock-history me-2"></i>Hourly Timeline (Swipe Horizontally)</h5>
                 
-                <!-- Admin Login / Logout Actions -->
-                <div th:unless="${isAdminLoggedIn}">
-                    <a href="/login" class="btn btn-outline-warning btn-sm fw-bold">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> Admin Login
-                    </a>
-                </div>
-                <div th:if="${isAdminLoggedIn}" class="d-flex align-items-center">
-                    <span class="text-white small me-3">
-                        <i class="bi bi-person-circle text-info me-1"></i> <strong th:text="${session.adminName}">Admin</strong>
-                    </span>
-                    <form action="/logout" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-outline-danger btn-sm fw-bold">
-                            <i class="bi bi-box-arrow-right me-1"></i> Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </nav>
+                <div class="timeline-scroll">
+                    <div class="card timeline-card border-0 bg-light text-center p-3" th:each="i : ${#numbers.sequence(0, hourlyTimes.size() - 1)}">
+                        <div class="small fw-bold text-muted mb-2" th:text="${#strings.substring(hourlyTimes[i], 11, 16)}">00:00</div>
+                        
+                        <div class="fs-2 my-2 text-primary">
+                            <i class="bi bi-cloud-rain" th:if="${hourlyPrecip[i] >= 7.5}"></i>
+                            <i class="bi bi-cloud-sun" th:if="${hourlyPrecip[i] < 7.5}"></i>
+                        </div>
 
-    <div class="container mt-4 mb-5">
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card shadow-sm border-0 bg-white">
-                    <div class="card-body p-4">
-                        <h2 class="fw-bold text-dark mb-1"><i class="bi bi-calendar3 text-primary me-2"></i> Hourly Advance Forecast</h2>
-                        <p class="text-muted mb-0">Inspect upcoming weather conditions and simulated class modes hour-by-hour for planning and forecasting.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <div class="metric-value fw-bold fs-5 text-dark mb-1" th:text="${hourlyTemps[i]} + '°C'">24°C</div>
+                        <div class="small text-secondary mb-3 metric-value" th:text="${hourlyPrecip[i]} + ' mm'">0.0 mm</div>
 
-        <!-- Filter Controls Card -->
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-body p-3">
-                <div class="row g-3 align-items-center">
-                    <div class="col-md-4">
-                        <label for="dateFilter" class="form-label small fw-bold text-muted mb-1">Filter by Date</label>
-                        <input type="date" id="dateFilter" class="form-control form-control-sm" onchange="filterForecast()">
-                    </div>
-                    <div class="col-md-4">
-                        <label for="timeFilter" class="form-label small fw-bold text-muted mb-1">Filter by Hour</label>
-                        <select id="timeFilter" class="form-select form-select-sm" onchange="filterForecast()">
-                            <option value="" selected>All Hours (12:00 AM - 11:00 PM)</option>
-                            <option value="12:00 AM">12:00 AM (00:00)</option>
-                            <option value="01:00 AM">01:00 AM (01:00)</option>
-                            <option value="02:00 AM">02:00 AM (02:00)</option>
-                            <option value="03:00 AM">03:00 AM (03:00)</option>
-                            <option value="04:00 AM">04:00 AM (04:00)</option>
-                            <option value="05:00 AM">05:00 AM (05:00)</option>
-                            <option value="06:00 AM">06:00 AM (06:00)</option>
-                            <option value="07:00 AM">07:00 AM (07:00)</option>
-                            <option value="08:00 AM">08:00 AM (08:00)</option>
-                            <option value="09:00 AM">09:00 AM (09:00)</option>
-                            <option value="10:00 AM">10:00 AM (10:00)</option>
-                            <option value="11:00 AM">11:00 AM (11:00)</option>
-                            <option value="12:00 PM">12:00 PM (12:00)</option>
-                            <option value="01:00 PM">01:00 PM (13:00)</option>
-                            <option value="02:00 PM">02:00 PM (14:00)</option>
-                            <option value="03:00 PM">03:00 PM (15:00)</option>
-                            <option value="04:00 PM">04:00 PM (16:00)</option>
-                            <option value="05:00 PM">05:00 PM (17:00)</option>
-                            <option value="06:00 PM">06:00 PM (18:00)</option>
-                            <option value="07:00 PM">07:00 PM (19:00)</option>
-                            <option value="08:00 PM">08:00 PM (20:00)</option>
-                            <option value="09:00 PM">09:00 PM (21:00)</option>
-                            <option value="10:00 PM">10:00 PM (22:00)</option>
-                            <option value="11:00 PM">11:00 PM (23:00)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label small fw-bold text-muted mb-1 d-block">&nbsp;</label>
-                        <button class="btn btn-outline-secondary btn-sm w-100" onclick="resetFilters()">
-                            <i class="bi bi-x-circle me-1"></i> Reset Filters
-                        </button>
+                        <!-- Estimated Mode Badge -->
+                        <div>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] < 7.5}">IN-PERSON</span>
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] >= 7.5 and hourlyPrecip[i] <= 15.0}">MODULAR</span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] > 15.0}">SUSPENDED</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Forecast Table Card -->
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-dark sticky-top">
-                            <tr>
-                                <th class="py-3 ps-4">Date & Time</th>
-                                <th class="py-3">Temperature</th>
-                                <th class="py-3">Precipitation</th>
-                                <th class="py-3">Wind Speed</th>
-                                <th class="py-3 pe-4">Estimated Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="forecastTableBody">
-                            <tr th:each="time, iterStat : ${hourlyTimes}">
-                                <td class="ps-4 fw-bold text-secondary forecast-time" th:text="${time}">2026-07-29T00:00</td>
-                                <td>
-                                    <span class="fw-semibold" th:text="${hourlyTemps[iterStat.index]} + ' &deg;C'">0.0 °C</span>
-                                </td>
-                                <td>
-                                    <span th:text="${hourlyPrecip[iterStat.index]} + ' mm/hr'">0.0 mm/hr</span>
-                                </td>
-                                <td>
-                                    <span th:text="${hourlyWind[iterStat.index]} + ' km/h'">0.0 km/h</span>
-                                </td>
-                                <td class="pe-4">
-                                    <span th:if="${hourlyPrecip[iterStat.index] > 15.0}" class="badge bg-danger">SUSPENDED</span>
-                                    <span th:if="${hourlyPrecip[iterStat.index] >= 7.5 and hourlyPrecip[iterStat.index] <= 15.0}" class="badge bg-warning text-dark">MODULAR</span>
-                                    <span th:if="${hourlyPrecip[iterStat.index] < 7.5}" class="badge bg-success">IN_PERSON</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Format ISO string to 12-hour format with space on page load & filter logic -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const timeCells = document.querySelectorAll('.forecast-time');
-            timeCells.forEach(cell => {
-                const rawIso = cell.textContent.trim();
-                if (rawIso.includes('T')) {
-                    const parts = rawIso.split('T');
-                    const datePart = parts[0];
-                    const timePart = parts[1];
-                    
-                    const hourMin = timePart.split(':');
-                    let hour = parseInt(hourMin[0], 10);
-                    const minute = hourMin[1] || '00';
-                    
-                    const ampm = hour >= 12 ? 'PM' : 'AM';
-                    hour = hour % 12;
-                    hour = hour ? hour : 12;
-                    const formattedHour = hour < 10 ? '0' + hour : hour;
-                    
-                    cell.textContent = `${datePart} ${formattedHour}:${minute} ${ampm}`;
-                }
-            });
-        });
+    <!-- Professional Footer -->
+    <footer class="bg-white border-top py-4 mt-auto text-muted small">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold text-dark">FTNHS Weather Hub &bull; Fermin Tayabas National High School</p>
+            <p class="mb-2">Developed by <span class="text-primary fw-medium">Anthony Riel C. Diango</span> &bull; Programming Teacher</p>
+            <div class="d-flex justify-content-center flex-wrap gap-3 text-secondary opacity-75">
+                <span><i class="bi bi-server me-1"></i>Spring Boot</span>
+                <span><i class="bi bi-cloud-sun me-1"></i>Open-Meteo API</span>
+                <span><i class="bi bi-shield-check me-1"></i>Supabase</span>
+                <span><i class="bi bi-hdd-network me-1"></i>Render</span>
+            </div>
+        </div>
+    </footer>
 
-        function filterForecast() {
-            const dateVal = document.getElementById('dateFilter').value;
-            const timeVal = document.getElementById('timeFilter').value;
-            
-            const rows = document.querySelectorAll('#forecastTableBody tr');
-            
-            rows.forEach(row => {
-                const cellText = row.cells[0].textContent;
-                
-                let matchesDate = true;
-                let matchesTime = true;
-                
-                if (dateVal) {
-                    matchesDate = cellText.includes(dateVal);
-                }
-                if (timeVal) {
-                    matchesTime = cellText.includes(timeVal);
-                }
-                
-                if (matchesDate && matchesTime) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-        
-        function resetFilters() {
-            document.getElementById('dateFilter').value = '';
-            document.getElementById('timeFilter').value = '';
-            filterForecast();
-        }
-    </script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime; // Changed from LocalDateTime
 import java.time.ZoneId;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,7 +41,7 @@ public class WeatherDecisionEngine {
     public void initializeStartupCheck() {
         try {
             ZoneId phZone = ZoneId.of("Asia/Manila");
-            LocalDateTime now = LocalDateTime.now(phZone);
+            OffsetDateTime now = OffsetDateTime.now(phZone); // Using OffsetDateTime
             WeatherLog latestLog = weatherLogRepository.findTopByOrderByTimestampDesc();
 
             if (latestLog == null || latestLog.getTimestamp() == null) {
@@ -98,7 +98,8 @@ public class WeatherDecisionEngine {
                 String recommendedStatus = evaluateLearningMode(precipitation);
 
                 WeatherLog logEntry = new WeatherLog();
-                logEntry.setTimestamp(LocalDateTime.now(ZoneId.of("Asia/Manila")));
+                // Save using OffsetDateTime locked to Asia/Manila
+                logEntry.setTimestamp(OffsetDateTime.now(ZoneId.of("Asia/Manila")));
                 logEntry.setLocation("School Campus - Main");
                 logEntry.setPrecipitationMm(precipitation);
                 logEntry.setTemperature(temperature);
