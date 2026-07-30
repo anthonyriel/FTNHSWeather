@@ -176,6 +176,19 @@
                 </div>
             </div>
 
+            <!-- Success Advisory Sent Banner -->
+            <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center p-3" 
+                 role="alert" 
+                 th:if="${param.success != null and param.success[0] == 'advisory_sent'}">
+                <div class="bg-success p-2 rounded-3 me-3 text-white fs-4">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-success">Advisory Broadcast Successful!</h6>
+                    <p class="mb-0 small text-secondary">Your custom advisory has been sent to all registered devices and recorded in the history log.</p>
+                </div>
+            </div>
+
             <!-- Main Status Banner -->
             <div class="card border-0 shadow-lg mb-4 rounded-4 text-white" th:classappend="${bannerClass}">
                 <div class="card-body p-4 p-md-5 position-relative">
@@ -406,19 +419,6 @@
                 </div>
             </div>
 
-            <!-- Official DepEd Daily Report Quick Link (Admin Only) -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
-                <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1"><i class="bi bi-file-earmark-pdf me-2 text-primary"></i>Official DepEd Daily Report</h5>
-                        <p class="text-muted small mb-0">Generate, view, and print official incident and weather evaluation reports for archiving.</p>
-                    </div>
-                    <a href="/report/daily" class="btn btn-outline-primary fw-medium px-4 w-100 w-md-auto text-center" target="_blank">
-                        <i class="bi bi-printer me-2"></i>View Official Report
-                    </a>
-                </div>
-            </div>
-
             <!-- Admin Override Controls (Admin Only) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4">
@@ -443,6 +443,86 @@
                         <form action="/admin/revert-automatic" method="post" class="d-inline ms-md-auto">
                             <button type="submit" class="btn btn-secondary fw-medium btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Revert to Auto</button>
                         </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Official DepEd Daily Report Quick Link (Admin Only) -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
+                <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1"><i class="bi bi-file-earmark-pdf me-2 text-primary"></i>Official DepEd Daily Report</h5>
+                        <p class="text-muted small mb-0">Generate, view, and print official incident and weather evaluation reports for archiving.</p>
+                    </div>
+                    <a href="/report/daily" class="btn btn-outline-primary fw-medium px-4 w-100 w-md-auto text-center" target="_blank">
+                        <i class="bi bi-printer me-2"></i>View Official Report
+                    </a>
+                </div>
+            </div>
+
+            <!-- Admin Manual Advisory Broadcast Card (Admin Only) -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3 text-success fs-4">
+                            <i class="bi bi-megaphone-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">Broadcast Custom Advisory</h5>
+                            <p class="text-muted small mb-0">Manually compose and push a weather announcement to all active users.</p>
+                        </div>
+                    </div>
+
+                    <form action="/admin/send-advisory" method="post">
+                        <div class="mb-3">
+                            <label for="advisoryTitle" class="form-label small fw-bold text-uppercase text-secondary">Advisory Title</label>
+                            <input type="text" class="form-control rounded-3" id="advisoryTitle" name="title" value="FTNHS Weather Advisory" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="advisoryBody" class="form-label small fw-bold text-uppercase text-secondary">Message Body</label>
+                            <textarea class="form-control rounded-3" id="advisoryBody" name="body" rows="3" placeholder="Type your custom weather announcement, class suspension note, or instruction here..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success fw-medium px-4 py-2">
+                            <i class="bi bi-send-fill me-2"></i>Send Broadcast Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Notification History Section -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3 text-success fs-4">
+                            <i class="bi bi-bell-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">Recent Broadcast Notifications</h5>
+                            <p class="text-muted small mb-0">Log of recent automated weather advisories sent to devices.</p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small text-uppercase">
+                                <tr>
+                                    <th>Advisory Title</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${notificationLogs == null or notificationLogs.empty}">
+                                    <td colspan="2" class="text-center text-muted py-3 small">No notifications broadcasted yet today.</td>
+                                </tr>
+                                <tr th:each="log : ${notificationLogs}">
+                                    <td>
+                                        <div class="fw-bold text-dark" th:text="${log.title}">FTNHS Weather Advisory</div>
+                                        <div class="small text-secondary" th:text="${log.body}">Alert body text...</div>
+                                    </td>
+                                    <td class="small text-muted weather-value text-nowrap" th:text="${#temporals.format(log.sentAt, 'MMM dd, yyyy hh:mm a')}">Timestamp</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

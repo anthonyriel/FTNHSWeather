@@ -5,8 +5,10 @@ import edu.ftnhs.weather_manager.entity.LearningStatusLog;
 import edu.ftnhs.weather_manager.entity.User;
 import edu.ftnhs.weather_manager.entity.WeatherLog;
 import edu.ftnhs.weather_manager.repository.LearningStatusLogRepository;
+import edu.ftnhs.weather_manager.repository.NotificationLogRepository;
 import edu.ftnhs.weather_manager.repository.UserRepository;
 import edu.ftnhs.weather_manager.repository.WeatherLogRepository;
+import edu.ftnhs.weather_manager.service.PushNotificationService;
 import edu.ftnhs.weather_manager.service.WeatherDecisionEngine;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -40,16 +42,22 @@ public class DashboardController {
     private final WeatherLogRepository weatherLogRepository;
     private final LearningStatusLogRepository learningStatusLogRepository;
     private final UserRepository userRepository;
+    private final NotificationLogRepository notificationLogRepository;
     private final WeatherDecisionEngine weatherDecisionEngine;
+    private final PushNotificationService pushNotificationService;
 
     public DashboardController(WeatherLogRepository weatherLogRepository, 
                                LearningStatusLogRepository learningStatusLogRepository,
                                UserRepository userRepository,
-                               WeatherDecisionEngine weatherDecisionEngine) {
+                               NotificationLogRepository notificationLogRepository,
+                               WeatherDecisionEngine weatherDecisionEngine,
+                               PushNotificationService pushNotificationService) {
         this.weatherLogRepository = weatherLogRepository;
         this.learningStatusLogRepository = learningStatusLogRepository;
         this.userRepository = userRepository;
+        this.notificationLogRepository = notificationLogRepository;
         this.weatherDecisionEngine = weatherDecisionEngine;
+        this.pushNotificationService = pushNotificationService;
     }
 
     private boolean checkAdmin(String adminUser) {
@@ -177,6 +185,9 @@ public class DashboardController {
         model.addAttribute("highestRainToday", highestRainToday);
         model.addAttribute("peakWindToday", peakWindToday);
 
+        // Add recent notification broadcast history logs
+        model.addAttribute("notificationLogs", notificationLogRepository.findTop10ByOrderBySentAtDesc());
+
         return "dashboard"; 
     }
 
@@ -266,6 +277,25 @@ public class DashboardController {
         LocalDate today = LocalDate.now(phZone);
         learningStatusLogRepository.deleteByTargetDate(today);
         return "redirect:/";
+    }
+
+    @PostMapping("/admin/send-advisory")
+    public String sendManualAdvisory(@RequestParam String title, 
+                                     @RequestParam String body, 
+                                     @CookieValue(value = "adminUser", required = false) String adminUser) {
+        if (!checkAdmin(adminUser)) return "redirect:/login";
+
+        if (title == null || title.trim().isEmpty()) title = "FTNHS Weather Advisory";
+        if (body == null || body.trim().isEmpty()) body = "Important update from FTNHS Administration.";
+
+        String safeTitle = title.replace("\"", "'");
+        String safeBody = body.replace("\"", "'");
+
+        String payload = String.format("{\"title\":\"%s\", \"body\":\"%s\", \"url\":\"/\"}", safeTitle, safeBody);
+        
+        pushNotificationService.sendNotificationToAll(payload);
+
+        return "redirect:/?success=advisory_sent";
     }
 
     @GetMapping("/admin/users")

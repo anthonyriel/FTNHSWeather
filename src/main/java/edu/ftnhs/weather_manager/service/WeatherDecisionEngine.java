@@ -28,14 +28,17 @@ public class WeatherDecisionEngine {
     private final RestClient restClient;
     private final WeatherLogRepository weatherLogRepository;
     private final LearningStatusLogRepository learningStatusLogRepository;
+    private final PushNotificationService pushNotificationService;
 
     private static final String WEATHER_API_URL = 
     "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,pressure_msl,wind_speed_10m,visibility,uv_index,precipitation_probability&hourly=temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m,precipitation_probability&timezone=auto";
 
     public WeatherDecisionEngine(WeatherLogRepository weatherLogRepository, 
-                                 LearningStatusLogRepository learningStatusLogRepository) {
+                                 LearningStatusLogRepository learningStatusLogRepository,
+                                 PushNotificationService pushNotificationService) {
         this.weatherLogRepository = weatherLogRepository;
         this.learningStatusLogRepository = learningStatusLogRepository;
+        this.pushNotificationService = pushNotificationService;
         this.restClient = RestClient.create();
     }
 
@@ -60,7 +63,7 @@ public class WeatherDecisionEngine {
                     long remainingMinutes = 10 - elapsedMinutes;
                     long remainingSeconds = (10 * 60) - duration.getSeconds();
                     log.info("Last check was {} minutes ago. Scheduling next catch-up check in {} minutes (approx {} seconds).", 
-                             elapsedMinutes, remainingMinutes, remainingSeconds);
+                            elapsedMinutes, remainingMinutes, remainingSeconds);
 
                     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
                     scheduler.schedule(() -> {
@@ -78,7 +81,6 @@ public class WeatherDecisionEngine {
         }
     }
 
-    // Updates are now cleanly driven by cron-job.org hitting /api/health every 10 minutes.
     public void fetchWeatherAndEvaluateStatus() {
         log.info("Initiating weather check via external trigger...");
 
@@ -201,5 +203,19 @@ public class WeatherDecisionEngine {
 
         learningStatusLogRepository.save(statusLog);
         log.info("DepEd 4H status evaluated: Mode = {}, Risk = {}", mode, risk);
+
+        // Automatically trigger push notification broadcast if weather requires advisory/suspension
+        if (!"IN_PERSON".equalsIgnoreCase(mode) && !"CHECK_IN".equalsIgnoreCase(mode)) {
+            try {
+                String title = "FTNHS Weather Alert: " + mode;
+                String body = String.format("Risk: %s | Rain: %.1f mm/hr. %s", risk, rainMm, reason);
+                String payload = String.format("{\"title\":\"%s\", \"body\":\"%s\", \"url\":\"/\"}", title, body);
+                
+                pushNotificationService.sendNotificationToAll(payload);
+                log.info("Automated push broadcast triggered for mode: {}", mode);
+            } catch (Exception e) {
+                log.error("Failed to send automated push broadcast: ", e);
+            }
+        }
     }
 }

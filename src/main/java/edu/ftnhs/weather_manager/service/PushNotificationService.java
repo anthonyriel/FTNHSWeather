@@ -1,6 +1,8 @@
 package edu.ftnhs.weather_manager.service;
 
+import edu.ftnhs.weather_manager.entity.NotificationLog;
 import edu.ftnhs.weather_manager.entity.PushSubscription;
+import edu.ftnhs.weather_manager.repository.NotificationLogRepository;
 import edu.ftnhs.weather_manager.repository.PushSubscriptionRepository;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +17,8 @@ import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPrivateKeySpec;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Base64;
 import java.util.List;
 import java.util.logging.Logger;
@@ -25,6 +29,7 @@ public class PushNotificationService {
     private static final Logger LOGGER = Logger.getLogger(PushNotificationService.class.getName());
 
     private final PushSubscriptionRepository subscriptionRepository;
+    private final NotificationLogRepository notificationLogRepository;
 
     @Value("${vapid.public.key}")
     private String vapidPublicKey;
@@ -37,8 +42,10 @@ public class PushNotificationService {
 
     private final RestClient restClient = RestClient.create();
 
-    public PushNotificationService(PushSubscriptionRepository subscriptionRepository) {
+    public PushNotificationService(PushSubscriptionRepository subscriptionRepository,
+                                   NotificationLogRepository notificationLogRepository) {
         this.subscriptionRepository = subscriptionRepository;
+        this.notificationLogRepository = notificationLogRepository;
     }
 
     @PostConstruct
@@ -46,16 +53,44 @@ public class PushNotificationService {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
-        LOGGER.info("PushNotificationService initialized with direct VAPID dispatch.");
+        LOGGER.info("PushNotificationService initialized with direct VAPID dispatch and history logging.");
     }
 
     public void sendNotificationToAll(String payload) {
+        // Parse clean title and body from JSON payload if possible
+        String displayTitle = "FTNHS Weather Advisory";
+        String displayBody = payload;
+
+        try {
+            java.util.regex.Matcher titleMatcher = java.util.regex.Pattern.compile("\"title\"\\s*:\\s*\"([^\"]+)\"").matcher(payload);
+            if (titleMatcher.find()) {
+                displayTitle = titleMatcher.group(1);
+            }
+            java.util.regex.Matcher bodyMatcher = java.util.regex.Pattern.compile("\"body\"\\s*:\\s*\"([^\"]+)\"").matcher(payload);
+            if (bodyMatcher.find()) {
+                displayBody = bodyMatcher.group(1);
+            }
+        } catch (Exception ignored) {}
+
+        // 1. Save cleaned log to Notification History Log
+        try {
+            NotificationLog logEntry = new NotificationLog();
+            logEntry.setTitle(displayTitle);
+            logEntry.setBody(displayBody);
+            logEntry.setSentAt(OffsetDateTime.now(ZoneId.of("Asia/Manila")));
+            notificationLogRepository.save(logEntry);
+            LOGGER.info("Notification saved to history log successfully.");
+        } catch (Exception e) {
+            LOGGER.warning("Failed to save notification to history log: " + e.getMessage());
+        }
+
+        // 2. Broadcast push to all active subscriptions
         List<PushSubscription> subscriptions = subscriptionRepository.findAll();
         LOGGER.info("Found " + subscriptions.size() + " push subscription(s) to notify.");
 
         for (PushSubscription sub : subscriptions) {
             try {
-                sendWebPush(sub.getEndpoint());
+                sendWebPush(sub.getEndpoint(), payload);
                 LOGGER.info("Successfully pushed notification to: " + sub.getEndpoint());
             } catch (Exception e) {
                 LOGGER.warning("Failed to send push notification: " + e.getMessage());
@@ -67,7 +102,7 @@ public class PushNotificationService {
         }
     }
 
-    private void sendWebPush(String endpoint) throws Exception {
+    private void sendWebPush(String endpoint, String payload) throws Exception {
         String audience = extractOrigin(endpoint);
         byte[] privBytes = Base64.getUrlDecoder().decode(vapidPrivateKey.replace("=", "").trim());
         String jwt = generateVapidJwt(audience, vapidSubject != null && !vapidSubject.trim().isEmpty() ? vapidSubject : "mailto:admin@ftnhs.edu.ph", privBytes);
@@ -77,7 +112,9 @@ public class PushNotificationService {
         ResponseEntity<String> response = restClient.post()
                 .uri(endpoint)
                 .header(HttpHeaders.AUTHORIZATION, authHeaderValue)
+                .header(HttpHeaders.CONTENT_TYPE, "application/json")
                 .header("TTL", "86400")
+                .body(payload)
                 .retrieve()
                 .toEntity(String.class);
 
@@ -107,7 +144,6 @@ public class PushNotificationService {
         ecdsa.update(unsignedJwt.getBytes(StandardCharsets.UTF_8));
         byte[] derSignature = ecdsa.sign();
 
-        // Convert Java DER signature to IEEE P1363 raw r||s format required by JWT ES256
         byte[] rawSignature = derToConcatenated(derSignature, 32);
 
         return unsignedJwt + "." + Base64.getUrlEncoder().withoutPadding().encodeToString(rawSignature);
