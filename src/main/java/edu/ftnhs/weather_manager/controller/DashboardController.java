@@ -35,6 +35,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.List;
+import java.util.Comparator;
+import edu.ftnhs.weather_manager.entity.NotificationLog;
 
 @Controller
 public class DashboardController {
@@ -185,8 +187,12 @@ public class DashboardController {
         model.addAttribute("highestRainToday", highestRainToday);
         model.addAttribute("peakWindToday", peakWindToday);
 
-        // Add recent notification broadcast history logs
-        model.addAttribute("notificationLogs", notificationLogRepository.findTop10ByOrderBySentAtDesc());
+        // Add recent notification broadcast history logs (fallback if repository method is unavailable)
+        List<NotificationLog> notificationLogs = notificationLogRepository.findAll().stream()
+            .sorted(Comparator.comparing((NotificationLog log) -> log.getSentAt(), Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+            .limit(10)
+            .collect(Collectors.toList());
+        model.addAttribute("notificationLogs", notificationLogs);
 
         return "dashboard"; 
     }

@@ -11,14 +11,19 @@ public class NotificationLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
-    
-    @Column(columnDefinition = "TEXT")
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String body;
-    
-    private String learningMode;
-    private String riskLevel;
-    private OffsetDateTime sentAt;
+
+    @Column(name = "sent_at")
+    private OffsetDateTime sentAt = OffsetDateTime.now();
+
+    @Column(name = "sender")
+    private String sender;
+
+    public NotificationLog() {}
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -30,12 +35,9 @@ public class NotificationLog {
     public String getBody() { return body; }
     public void setBody(String body) { this.body = body; }
 
-    public String getLearningMode() { return learningMode; }
-    public void setLearningMode(String learningMode) { this.learningMode = learningMode; }
-
-    public String getRiskLevel() { return riskLevel; }
-    public void setRiskLevel(String riskLevel) { this.riskLevel = riskLevel; }
-
     public OffsetDateTime getSentAt() { return sentAt; }
     public void setSentAt(OffsetDateTime sentAt) { this.sentAt = sentAt; }
+
+    public String getSender() { return sender; }
+    public void setSender(String sender) { this.sender = sender; }
 }

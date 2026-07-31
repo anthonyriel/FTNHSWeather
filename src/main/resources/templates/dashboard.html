@@ -29,7 +29,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            overflow-x: hidden; /* Prevents mobile horizontal overflow */
+            overflow-x: hidden;
         }
         .content-wrap {
             flex: 1;
@@ -115,6 +115,23 @@
             background-color: var(--header-bg);
             color: #fff;
             border-color: var(--header-bg);
+        }
+
+        /* Responsive Override Grid System */
+        .override-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+        @media (min-width: 768px) {
+            .override-controls-grid {
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 0.5rem;
+            }
+            .override-controls-grid > * {
+                flex: 1;
+            }
         }
 
         /* Ultra-small phone optimization (< 380px) */
@@ -241,7 +258,6 @@
 
                     <div class="row align-items-center g-4">
                         <div class="col-12 col-md-7">
-                            <!-- Added text-center for mobile and text-md-start for desktop alignment -->
                             <div class="my-2 text-center text-md-start">
                                 <h5 class="fw-bold mb-2 opacity-90" style="letter-spacing: 0.5px;">Today's Learning Mode</h5>
                                 <h1 class="display-4 fw-bolder mb-3 d-flex align-items-center justify-content-center justify-content-md-start gap-2 flex-wrap" style="letter-spacing: -1px;">
@@ -283,13 +299,12 @@
             </div>
 
             <!-- Comprehensive Weather Metrics Grid -->
-            <div class="mb-3 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <h4 class="fw-bold text-dark mb-0 fs-5 fs-md-4 flex-shrink-0">
+            <div class="mb-3 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
+                <h4 class="fw-bold text-dark mb-0 fs-5 fs-md-4 flex-shrink-0 d-flex align-items-center">
                     <i class="bi bi-cloud-sun me-2 text-primary"></i>
-                    <span class="d-none d-md-inline" style="white-space: nowrap;">Current Meteorological Metrics</span>
-                    <span class="d-md-none">Current Meteorological Metrics</span>
+                    <span>Current Meteorological Metrics</span>
                 </h4>
-                <button onclick="subscribeUserToPush()" class="btn btn-outline-success btn-touch-target fw-medium shadow-sm w-100 w-md-auto ms-md-auto flex-shrink-0">
+                <button onclick="subscribeUserToPush()" class="btn btn-outline-success btn-touch-target fw-medium shadow-sm w-100 w-md-auto flex-shrink-0">
                     🔔 Enable Phone Notifications
                 </button>
             </div>
@@ -487,28 +502,18 @@
                 </div>
             </div>
 
-            <!-- Admin Override Controls -->
+            <!-- Admin Override Controls (Updated with 2x2 Mobile / 1-Line Desktop Grid) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>4H Manual Override</h5>
-                    <div class="d-grid gap-2 d-md-flex flex-md-wrap">
-                        <form action="/admin/override" method="post" class="d-block d-md-inline-block">
-                            <input type="hidden" name="overrideMode" value="IN_PERSON">
-                            <button type="submit" class="btn btn-outline-success fw-medium btn-touch-target w-100"><i class="bi bi-check-circle me-2"></i>Force Hayo</button>
-                        </form>
-                        <form action="/admin/override" method="post" class="d-block d-md-inline-block">
-                            <input type="hidden" name="overrideMode" value="MODULAR">
-                            <button type="submit" class="btn btn-outline-warning fw-medium btn-touch-target w-100" style="color: #d97706 !important; border-color: #d97706 !important;"><i class="bi bi-book-half me-2"></i>Force Hinay</button>
-                        </form>
-                        <form action="/admin/override" method="post" class="d-block d-md-inline-block">
-                            <input type="hidden" name="overrideMode" value="CHECK_IN">
-                            <button type="submit" class="btn btn-outline-info fw-medium btn-touch-target w-100" style="color: #0284c7 !important; border-color: #0284c7 !important;"><i class="bi bi-heart-pulse me-2"></i>Force Hinga</button>
-                        </form>
-                        <form action="/admin/override" method="post" class="d-block d-md-inline-block">
-                            <input type="hidden" name="overrideMode" value="SUSPENDED">
-                            <button type="submit" class="btn btn-outline-danger fw-medium btn-touch-target w-100"><i class="bi bi-x-octagon me-2"></i>Force Hinto</button>
-                        </form>
-                        <form action="/admin/revert-automatic" method="post" class="d-block d-md-inline-block ms-md-auto mt-2 mt-md-0">
+                    <div class="override-controls-grid">
+                        <button type="button" class="btn btn-outline-success fw-medium btn-touch-target w-100" onclick="triggerOverrideModal('IN_PERSON')"><i class="bi bi-check-circle me-1 me-md-2"></i>Force Hayo</button>
+                        <button type="button" class="btn btn-outline-warning fw-medium btn-touch-target w-100" style="color: #d97706 !important; border-color: #d97706 !important;" onclick="triggerOverrideModal('MODULAR')"><i class="bi bi-book-half me-1 me-md-2"></i>Force Hinay</button>
+                        <button type="button" class="btn btn-outline-info fw-medium btn-touch-target w-100" style="color: #0284c7 !important; border-color: #0284c7 !important;" onclick="triggerOverrideModal('CHECK_IN')"><i class="bi bi-heart-pulse me-1 me-md-2"></i>Force Hinga</button>
+                        <button type="button" class="btn btn-outline-danger fw-medium btn-touch-target w-100" onclick="triggerOverrideModal('SUSPENDED')"><i class="bi bi-x-octagon me-1 me-md-2"></i>Force Hinto</button>
+                    </div>
+                    <div class="mt-2">
+                        <form action="/admin/revert-automatic" method="post" class="w-100">
                             <button type="submit" class="btn btn-secondary fw-medium btn-touch-target w-100"><i class="bi bi-arrow-counterclockwise me-2"></i>Revert to Auto</button>
                         </form>
                     </div>
@@ -579,6 +584,17 @@
                         </div>
                     </div>
 
+                    <!-- Quick-Select DepEd Templates -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-uppercase text-secondary">Quick-Select DepEd Templates</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="applyTemplate('typhoon')">🌩️ Typhoon Signal Alert</button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="applyTemplate('power')">⚡ Local Power / Internet Outage</button>
+                            <button type="button" class="btn btn-outline-info btn-sm" onclick="applyTemplate('flood')">🌊 Flash Flood / Campus Inaccessible</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="applyTemplate('heat')">☀️ Extreme Heat Index Notice</button>
+                        </div>
+                    </div>
+
                     <form action="/admin/send-advisory" method="post">
                         <div class="mb-3">
                             <label for="advisoryTitle" class="form-label small fw-bold text-uppercase text-secondary">Advisory Title</label>
@@ -595,6 +611,61 @@
                 </div>
             </div>
             
+        </div>
+    </div>
+
+    <!-- Manual Override Confirmation Modal -->
+    <div class="modal fade" id="overrideModal" tabindex="-1" aria-labelledby="overrideModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header bg-danger text-white rounded-top-4 py-3">
+                    <h5 class="modal-title fw-bold fs-6" id="overrideModalLabel">
+                        <i class="bi bi-shield-exclamation me-2"></i>Authorize System Override
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="targetOverrideMode">
+                    
+                    <div class="alert alert-warning small mb-3 border-0 bg-warning bg-opacity-10 text-dark">
+                        <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> 
+                        You are about to manually force the engine into <strong id="modeDisplayLabel" class="text-danger"></strong> mode. This action will be recorded in the audit logs.
+                    </div>
+
+                    <!-- Compulsory Reason Dropdown -->
+                    <div class="mb-3">
+                        <label for="overrideReason" class="form-label fw-bold small text-muted text-uppercase">Reason for Override <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" id="overrideReason" required>
+                            <option value="" selected disabled>-- Select Justification --</option>
+                            <option value="Localized Flooding">Localized Flooding</option>
+                            <option value="Power Outage">Power Outage</option>
+                            <option value="Division Order">Division Order</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Optional Custom Notes -->
+                    <div class="mb-3">
+                        <label for="overrideNotes" class="form-label fw-bold small text-muted text-uppercase">Custom Notes (Optional)</label>
+                        <textarea class="form-control form-control-sm" id="overrideNotes" rows="2" placeholder="Provide additional details or context..."></textarea>
+                    </div>
+
+                    <!-- Duration Selector TTL -->
+                    <div class="mb-3">
+                        <label for="overrideTtl" class="form-label fw-bold small text-muted text-uppercase">Active Duration (TTL)</label>
+                        <select class="form-select form-select-sm" id="overrideTtl">
+                            <option value="120">2 Hours</option>
+                            <option value="240" selected>4 Hours</option>
+                            <option value="480">8 Hours</option>
+                            <option value="1440">End of Day (24 Hours)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4 py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger btn-sm fw-bold px-4" onclick="submitOverride()">Confirm & Apply</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -616,6 +687,87 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Manual Override Modal & API Handler Script -->
+    <script>
+        let currentSelectedMode = '';
+
+        function triggerOverrideModal(mode) {
+            currentSelectedMode = mode;
+            document.getElementById('modeDisplayLabel').textContent = mode;
+            document.getElementById('targetOverrideMode').value = mode;
+            
+            document.getElementById('overrideReason').value = '';
+            document.getElementById('overrideNotes').value = '';
+            document.getElementById('overrideTtl').value = '240';
+
+            const overrideModal = new bootstrap.Modal(document.getElementById('overrideModal'));
+            overrideModal.show();
+        }
+
+        function submitOverride() {
+            const reason = document.getElementById('overrideReason').value;
+            const notes = document.getElementById('overrideNotes').value;
+            const durationMinutes = parseInt(document.getElementById('overrideTtl').value);
+
+            if (!reason) {
+                alert('Please select a valid reason for this manual override.');
+                document.getElementById('overrideReason').focus();
+                return;
+            }
+
+            const payload = {
+                mode: currentSelectedMode,
+                reason: reason,
+                notes: notes,
+                durationMinutes: durationMinutes
+            };
+
+            fetch('/api/v1/override', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (response.ok) {
+                    const modalEl = document.getElementById('overrideModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    location.reload();
+                } else {
+                    alert('Authorization failed or server error. Ensure you have ADMIN or PRINCIPAL privileges.');
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting override:', error);
+                alert('An error occurred while connecting to the server.');
+            });
+        }
+    </script>
+
+    <!-- DepEd Quick-Select Template Filler Script -->
+    <script>
+        function applyTemplate(type) {
+            const titleInput = document.getElementById('advisoryTitle');
+            const bodyInput = document.getElementById('advisoryBody');
+
+            if (type === 'typhoon') {
+                titleInput.value = '🌩️ Typhoon Signal Alert - DepEd Advisory';
+                bodyInput.value = 'Due to tropical cyclone signals raised by PAGASA, classes and school operations at Fermin Tayabas National High School are adjusted or suspended accordingly for the safety of all students and personnel. Please monitor official updates.';
+            } else if (type === 'power') {
+                titleInput.value = '⚡ Local Power / Internet Outage Notice';
+                bodyInput.value = 'Please be advised that there is an ongoing local power and/or internet service interruption affecting the school area. Alternative modular learning guidelines are now in effect.';
+            } else if (type === 'flood') {
+                titleInput.value = '🌊 Flash Flood / Campus Inaccessibility Notice';
+                bodyInput.value = 'Due to localized flooding and impassable access roads leading to Fermin Tayabas National High School, classes are temporarily suspended to ensure safety.';
+            } else if (type === 'heat') {
+                titleInput.value = '☀️ Extreme Heat Index Notice';
+                bodyInput.value = 'Due to hazardous heat index levels forecasted in the area, school operations and classes are adjusted to safeguard students and teachers against heat-related illnesses.';
+            }
+        }
+    </script>
 
     <!-- Broadcast History JSON Parser -->
     <script>
