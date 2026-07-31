@@ -1,17 +1,22 @@
 package edu.ftnhs.weather_manager.controller;
 
 import edu.ftnhs.weather_manager.dto.OpenMeteoResponse;
+import edu.ftnhs.weather_manager.dto.OverrideRequest;
 import edu.ftnhs.weather_manager.entity.LearningStatusLog;
+import edu.ftnhs.weather_manager.entity.OverrideLog;
 import edu.ftnhs.weather_manager.entity.User;
 import edu.ftnhs.weather_manager.entity.WeatherLog;
 import edu.ftnhs.weather_manager.repository.LearningStatusLogRepository;
 import edu.ftnhs.weather_manager.repository.NotificationLogRepository;
+import edu.ftnhs.weather_manager.repository.OverrideLogRepository;
 import edu.ftnhs.weather_manager.repository.UserRepository;
 import edu.ftnhs.weather_manager.repository.WeatherLogRepository;
 import edu.ftnhs.weather_manager.service.PushNotificationService;
 import edu.ftnhs.weather_manager.service.WeatherDecisionEngine;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -19,6 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClient;
 
@@ -33,9 +39,11 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.List;
-import java.util.Comparator;
 import edu.ftnhs.weather_manager.entity.NotificationLog;
 
 @Controller
@@ -47,19 +55,23 @@ public class DashboardController {
     private final NotificationLogRepository notificationLogRepository;
     private final WeatherDecisionEngine weatherDecisionEngine;
     private final PushNotificationService pushNotificationService;
+    private final OverrideLogRepository overrideLogRepository;
+    private final ScheduledExecutorService overrideScheduler = Executors.newSingleThreadScheduledExecutor();
 
     public DashboardController(WeatherLogRepository weatherLogRepository, 
                                LearningStatusLogRepository learningStatusLogRepository,
                                UserRepository userRepository,
                                NotificationLogRepository notificationLogRepository,
                                WeatherDecisionEngine weatherDecisionEngine,
-                               PushNotificationService pushNotificationService) {
+                               PushNotificationService pushNotificationService,
+                               OverrideLogRepository overrideLogRepository) {
         this.weatherLogRepository = weatherLogRepository;
         this.learningStatusLogRepository = learningStatusLogRepository;
         this.userRepository = userRepository;
         this.notificationLogRepository = notificationLogRepository;
         this.weatherDecisionEngine = weatherDecisionEngine;
         this.pushNotificationService = pushNotificationService;
+        this.overrideLogRepository = overrideLogRepository;
     }
 
     private boolean checkAdmin(String adminUser) {
@@ -187,9 +199,14 @@ public class DashboardController {
         model.addAttribute("highestRainToday", highestRainToday);
         model.addAttribute("peakWindToday", peakWindToday);
 
-        // Add recent notification broadcast history logs (fallback if repository method is unavailable)
+        // Add recent notification broadcast history logs (null-safe sorting with explicit types)
         List<NotificationLog> notificationLogs = notificationLogRepository.findAll().stream()
-            .sorted(Comparator.comparing((NotificationLog log) -> log.getSentAt(), Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+            .sorted((NotificationLog l1, NotificationLog l2) -> {
+                if (l1.getSentAt() == null && l2.getSentAt() == null) return 0;
+                if (l1.getSentAt() == null) return 1;
+                if (l2.getSentAt() == null) return -1;
+                return l2.getSentAt().compareTo(l1.getSentAt());
+            })
             .limit(10)
             .collect(Collectors.toList());
         model.addAttribute("notificationLogs", notificationLogs);
@@ -275,6 +292,63 @@ public class DashboardController {
         return "redirect:/"; 
     }
 
+    // Role-based Access Control added to API Override
+    @PreAuthorize("hasRole('ADMIN') or hasRole('PRINCIPAL')")
+    @PostMapping("/api/v1/override")
+    public ResponseEntity<?> handleApiOverride(@RequestBody OverrideRequest request, 
+                                               @CookieValue(value = "adminUser", required = false) String adminUser) {
+        if (!checkAdmin(adminUser)) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+
+        ZoneId phZone = ZoneId.of("Asia/Manila");
+        LocalDate today = LocalDate.now(phZone);
+        
+        // Capture previous mode for audit tracking
+        Optional<LearningStatusLog> existingStatus = learningStatusLogRepository.findTopByTargetDateOrderByCreatedAtDesc(today);
+        String previousMode = existingStatus.map(log -> log != null ? log.getStatus() : "IN_PERSON").orElse("IN_PERSON");
+
+        learningStatusLogRepository.deleteByTargetDate(today);
+
+        String fullReason = "Reason: " + request.getReason();
+        if (request.getNotes() != null && !request.getNotes().trim().isEmpty()) {
+            fullReason += " | Notes: " + request.getNotes();
+        }
+
+        // Save learning status log
+        LearningStatusLog manualLog = new LearningStatusLog();
+        manualLog.setTargetDate(today);
+        manualLog.setStatus(request.getMode());
+        manualLog.setAutomatedBySystem(false);
+        manualLog.setReason(fullReason);
+        manualLog.setCreatedAt(OffsetDateTime.now(phZone));
+        learningStatusLogRepository.save(manualLog);
+
+        // Save audit trail record into override_logs table
+        OverrideLog auditLog = new OverrideLog();
+        auditLog.setUserId(decodeCookieValue(adminUser));
+        auditLog.setPreviousMode(previousMode);
+        auditLog.setNewMode(request.getMode());
+        auditLog.setReason(request.getReason());
+        auditLog.setNotes(request.getNotes());
+        auditLog.setCreatedAt(OffsetDateTime.now(phZone));
+        overrideLogRepository.save(auditLog);
+
+        // Schedule automated reversion after TTL expires
+        long ttlMinutes = request.getDurationMinutes();
+        overrideScheduler.schedule(() -> {
+            try {
+                LocalDate targetDay = LocalDate.now(phZone);
+                learningStatusLogRepository.deleteByTargetDate(targetDay);
+                System.out.println("Override TTL expired after " + ttlMinutes + " minutes. Reverted system back to automatic evaluation.");
+            } catch (Exception e) {
+                System.err.println("Failed to auto-revert override status: " + e.getMessage());
+            }
+        }, ttlMinutes, TimeUnit.MINUTES);
+
+        return ResponseEntity.ok().body("Override applied successfully with audit logging and TTL: " + ttlMinutes + " minutes.");
+    }
+
     @PostMapping("/admin/revert-automatic")
     public String revertToAutomatic(@CookieValue(value = "adminUser", required = false) String adminUser) {
         if (!checkAdmin(adminUser)) return "redirect:/login";
@@ -285,6 +359,8 @@ public class DashboardController {
         return "redirect:/";
     }
 
+    // Role-based Access Control added to Broadcasting
+    @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
     @PostMapping("/admin/send-advisory")
     public String sendManualAdvisory(@RequestParam String title, 
                                      @RequestParam String body, 
@@ -308,7 +384,8 @@ public class DashboardController {
     public String viewUserManagement(Model model, @CookieValue(value = "adminUser", required = false) String adminUser) {
         if (!checkAdmin(adminUser)) return "redirect:/login";
 
-        model.addAttribute("users", userRepository.findAll());
+        // Only load active users so soft-deleted accounts do not show up
+        model.addAttribute("users", userRepository.findByIsActiveTrue());
         return "manage-users";
     }
 
@@ -335,6 +412,7 @@ public class DashboardController {
             user = new User();
             user.setPasswordHash(password);
             user.setStatus("ACTIVE");
+            user.setIsActive(true);
         }
         user.setUsername(username);
         user.setEmail(email);
@@ -351,7 +429,10 @@ public class DashboardController {
     @PostMapping("/admin/users/delete/{id}")
     public String deleteUser(@PathVariable UUID id, @CookieValue(value = "adminUser", required = false) String adminUser) {
         if (!checkAdmin(adminUser)) return "redirect:/login";
-        userRepository.deleteById(id);
+        
+        // Execute Soft Delete logic from Task 2.3
+        userRepository.softDeleteUser(id);
+        
         return "redirect:/admin/users";
     }
 
@@ -452,6 +533,8 @@ public class DashboardController {
         return "daily-report";
     }
 
+    // Role-based Access Control added to Diagnostics
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/diagnostics")
     public String viewDiagnostics(Model model, @CookieValue(value = "adminUser", required = false) String adminUser) {
         if (!checkAdmin(adminUser)) return "redirect:/login";

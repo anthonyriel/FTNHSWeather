@@ -6,11 +6,18 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity // Critical for @PreAuthorize to work
 public class SecurityConfig {
+
+    private final CookieAuthenticationFilter cookieAuthenticationFilter;
+
+    public SecurityConfig(CookieAuthenticationFilter cookieAuthenticationFilter) {
+        this.cookieAuthenticationFilter = cookieAuthenticationFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -21,8 +28,10 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/logout", "/error", "/api/**").permitAll()
                 .anyRequest().permitAll()
             )
-            .formLogin(form -> form.disable()) // Disable Spring Security form login so custom DashboardController handles it
-            .logout(logout -> logout.disable()); // Disable Spring Security logout so custom DashboardController handles cookies
+            .formLogin(form -> form.disable()) 
+            .logout(logout -> logout.disable())
+            // Inject the custom cookie filter before standard authentication
+            .addFilterBefore(cookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

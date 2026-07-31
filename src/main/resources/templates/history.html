@@ -81,27 +81,74 @@
             border-color: var(--header-bg);
         }
 
-        /* Task 1.3: Mobile Table Optimization */
+        /* Perfectly Aligned Stacked Mobile Card Layout */
         @media (max-width: 640px) {
-            .table-mobile-cards table, .table-mobile-cards thead, 
-            .table-mobile-cards tbody, .table-mobile-cards th, 
-            .table-mobile-cards td, .table-mobile-cards tr { display: block; }
-            .table-mobile-cards thead tr { position: absolute; top: -9999px; left: -9999px; }
+            .table-mobile-cards table, 
+            .table-mobile-cards thead, 
+            .table-mobile-cards tbody, 
+            .table-mobile-cards th, 
+            .table-mobile-cards td, 
             .table-mobile-cards tr { 
-                border: 1px solid rgba(0,0,0,0.1); border-radius: 0.75rem; 
-                margin-bottom: 1rem; padding: 1rem; background-color: #ffffff; 
-                display: flex; flex-direction: column; gap: 0.75rem; 
-                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); 
+                display: block; 
+                width: 100%;
+            }
+            .table-mobile-cards thead tr { 
+                position: absolute; 
+                top: -9999px; 
+                left: -9999px; 
+            }
+            .table-mobile-cards tr { 
+                border: 1px solid rgba(0,0,0,0.08); 
+                border-radius: 12px; 
+                margin-bottom: 1rem; 
+                padding: 0 1.25rem 1rem 1.25rem; 
+                background-color: #ffffff; 
+                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.04); 
+                overflow: hidden;
             }
             .table-mobile-cards td { 
-                border: none; border-bottom: 1px solid #f8f9fa; position: relative; 
-                padding: 0 0 0.5rem 0; display: flex; justify-content: space-between; 
-                align-items: center; text-align: right; 
+                border: none; 
+                border-bottom: 1px solid #f1f3f5; 
+                position: relative; 
+                padding: 0.75rem 0; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                text-align: right; 
             }
-            .table-mobile-cards td:last-child { border-bottom: 0; padding-bottom: 0; }
-            .table-mobile-cards td:before { 
-                content: attr(data-label); font-weight: 700; text-transform: uppercase; 
-                font-size: 0.75rem; color: #6c757d; text-align: left; padding-right: 1rem; 
+            .table-mobile-cards td:last-child { 
+                border-bottom: 0; 
+                padding-bottom: 0; 
+            }
+            /* Timestamp Banner (Left-Aligned Top Header) */
+            .table-mobile-cards td[data-label="Timestamp"] { 
+                flex-direction: column;
+                align-items: flex-start;
+                text-align: left;
+                background-color: #f8f9fa;
+                margin: 0 -1.25rem 0.5rem -1.25rem;
+                padding: 0.75rem 1.25rem;
+                border-bottom: 1px solid #e9ecef;
+                width: calc(100% + 2.50rem);
+            }
+            .table-mobile-cards td[data-label="Timestamp"]::before {
+                content: "TIMESTAMP";
+                font-weight: 700;
+                font-size: 0.7rem;
+                color: #6c757d;
+                letter-spacing: 0.5px;
+                margin-bottom: 0.15rem;
+            }
+            /* Standard Data Rows */
+            .table-mobile-cards td:not([data-label="Timestamp"])::before { 
+                content: attr(data-label); 
+                font-weight: 600; 
+                text-transform: uppercase; 
+                font-size: 0.75rem; 
+                color: #6c757d; 
+                text-align: left; 
+                padding-right: 1rem; 
+                letter-spacing: 0.5px;
             }
         }
     </style>
@@ -208,7 +255,7 @@
             <!-- Data Table View (Mobile Stacked Cards Enabled) -->
             <div class="card border-0 shadow-sm rounded-4 bg-white">
                 <div class="card-body p-0">
-                    <div class="table-responsive table-mobile-cards">
+                    <div class="table-responsive table-mobile-cards p-2 p-md-0">
                         <table class="table table-hover table-custom mb-0 align-middle">
                             <thead>
                                 <tr>
@@ -224,15 +271,15 @@
                                     <td colspan="5" class="text-center py-4 text-muted">No historical data available yet.</td>
                                 </tr>
                                 <tr th:each="log : ${weatherLogs}">
-                                    <td data-label="Timestamp" class="ps-4 fw-medium text-dark" th:text="${#temporals.format(log.timestamp, 'MMM dd, yyyy - hh:mm a')}"></td>
+                                    <td data-label="Timestamp" class="ps-md-4 fw-medium text-dark" th:text="${#temporals.format(log.timestamp, 'MMM dd, yyyy - hh:mm a')}"></td>
                                     <td data-label="Condition">
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" th:text="${log.weatherCondition}">Clear</span>
                                     </td>
-                                    <td data-label="Temperature"><span th:text="${log.temperature != null ? log.temperature : '0.0'}"></span> °C</td>
+                                    <td data-label="Temperature"><span class="fw-semibold"><span th:text="${log.temperature != null ? log.temperature : '0.0'}"></span> °C</span></td>
                                     <td data-label="Rainfall" class="fw-medium" th:classappend="${log.precipitationMm > 7.5 ? 'text-danger' : 'text-dark'}">
-                                        <span th:text="${log.precipitationMm}"></span> mm
+                                        <span class="fw-semibold"><span th:text="${log.precipitationMm}"></span> mm</span>
                                     </td>
-                                    <td data-label="Wind Speed"><span th:text="${log.windSpeed != null ? log.windSpeed : '0.0'}"></span> km/h</td>
+                                    <td data-label="Wind Speed"><span class="fw-semibold"><span th:text="${log.windSpeed != null ? log.windSpeed : '0.0'}"></span> km/h</span></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -258,7 +305,7 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Clean JavaScript with Dynamic Y-Axis Scaling & Task 1.3 Chart Optimizations -->
+    <!-- Clean JavaScript with Dynamic Y-Axis Scaling & Chart Optimizations -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const entries = document.querySelectorAll("#weatherDataStore .log-entry");
@@ -266,7 +313,6 @@
             let rainData = [];
             let tempData = [];
 
-            // Loop through hidden elements in reverse order so oldest is on the left
             entries.forEach(entry => {
                 labels.unshift(entry.getAttribute("data-timestamp"));
                 rainData.unshift(parseFloat(entry.getAttribute("data-rain")));
@@ -277,9 +323,8 @@
                 Chart.defaults.font.family = "'Inter', sans-serif";
                 Chart.defaults.color = '#6c757d';
 
-                // Automatically calculate dynamic bounds based on recorded data
-                const maxRain = Math.max(...rainData, 0.5); // Ensure at least 0.5 headroom if all zero
-                const dynamicRainMax = Math.max(maxRain * 1.2, 1.0); // 20% breathing room above max
+                const maxRain = Math.max(...rainData, 0.5);
+                const dynamicRainMax = Math.max(maxRain * 1.2, 1.0);
 
                 const minTemp = Math.min(...tempData);
                 const maxTemp = Math.max(...tempData);
@@ -306,17 +351,11 @@
                         maintainAspectRatio: false,
                         plugins: { 
                             legend: { display: false },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
-                            }
+                            tooltip: { mode: 'index', intersect: false }
                         },
                         scales: { 
                             x: {
-                                ticks: {
-                                    maxTicksLimit: 6,
-                                    maxRotation: 0
-                                }
+                                ticks: { maxTicksLimit: 6, maxRotation: 0 }
                             },
                             y: { 
                                 beginAtZero: true, 
@@ -349,17 +388,11 @@
                         maintainAspectRatio: false,
                         plugins: { 
                             legend: { display: false },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false
-                            }
+                            tooltip: { mode: 'index', intersect: false }
                         },
                         scales: { 
                             x: {
-                                ticks: {
-                                    maxTicksLimit: 6,
-                                    maxRotation: 0
-                                }
+                                ticks: { maxTicksLimit: 6, maxRotation: 0 }
                             },
                             y: { 
                                 beginAtZero: false, 

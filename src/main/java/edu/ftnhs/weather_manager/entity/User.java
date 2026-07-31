@@ -33,6 +33,10 @@ public class User {
     @Column(name = "last_login")
     private OffsetDateTime lastLogin;
 
+    // Added for Task 2.3: Soft Delete Flag
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     public User() {}
 
     // Getters and Setters
@@ -74,4 +78,7 @@ public class User {
 
     public OffsetDateTime getLastLogin() { return lastLogin; }
     public void setLastLogin(OffsetDateTime lastLogin) { this.lastLogin = lastLogin; }
+
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 }
