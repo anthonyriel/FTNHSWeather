@@ -136,7 +136,7 @@ public class WeatherDecisionEngine {
         if (code == null) return "Clear";
         return switch (code) {
             case 0 -> "Clear Sky";
-            case 1, 2, 3 -> "Partly Cloudy / Overcast";
+            case 1, 2, 3 -> "Partly Cloudy";
             case 45, 48 -> "Foggy";
             case 51, 53, 55, 56, 57 -> "Drizzle";
             case 61, 63, 65, 66, 67 -> "Rain / Showers";

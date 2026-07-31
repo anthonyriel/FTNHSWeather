@@ -247,7 +247,7 @@
                         <!-- Left/Top: Learning Mode Text -->
                         <div class="col-12 col-md-7">
                             <div class="my-2">
-                                <h5 class="fw-bold mb-2 opacity-90" style="letter-spacing: 0.5px;">Today's Learning Mode</h5>
+                                <h5 class="fw-bold mb-2 opacity-90 text-center" style="letter-spacing: 0.5px;">Today's Learning Mode</h5>
                                 <h1 class="display-4 fw-bolder mb-3 d-flex align-items-center justify-content-center justify-content-md-start gap-2 flex-wrap" style="letter-spacing: -1px;">
                                     <span th:if="${learningMode == 'IN_PERSON'}"><i class="bi bi-check-circle-fill"></i> HAYO <span class="fs-4 opacity-75 fw-normal ms-1">(In-Person)</span></span>
                                     <span th:if="${learningMode == 'MODULAR'}"><i class="bi bi-book-half"></i> HINAY <span class="fs-4 opacity-75 fw-normal ms-1">(Modular)</span></span>
@@ -289,108 +289,146 @@
 
             <!-- Comprehensive Weather Metrics Grid -->
             <div class="mb-3 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <h4 class="fw-bold text-dark mb-0 fs-5 fs-md-4"><i class="bi bi-cloud-sun me-2 text-primary"></i>Current Meteorological Metrics</h4>
-                <button onclick="subscribeUserToPush()" class="btn btn-outline-success btn-touch-target fw-medium shadow-sm w-100 w-md-auto">
+                <!-- Heading: Forced to one line on desktop, allowed to wrap naturally on tiny mobile screens -->
+                <h4 class="fw-bold text-dark mb-0 fs-5 fs-md-4 flex-shrink-0">
+                    <i class="bi bi-cloud-sun me-2 text-primary"></i>
+                    <span class="d-none d-md-inline" style="white-space: nowrap;">Current Meteorological Metrics</span>
+                    <span class="d-md-none">Current Meteorological Metrics</span>
+                </h4>
+                <!-- Button: Auto-width on desktop (w-md-auto) and pushed to the right (ms-md-auto) -->
+                <button onclick="subscribeUserToPush()" class="btn btn-outline-success btn-touch-target fw-medium shadow-sm w-100 w-md-auto ms-md-auto flex-shrink-0">
                     🔔 Enable Phone Notifications
                 </button>
             </div>
             
-            <div class="row g-3 g-md-4 mb-4">
+            <!-- Mobile 2-Column Grid (g-2 for mobile, g-4 for desktop) -->
+            <div class="row g-2 g-md-4 mb-4">
                 
                 <!-- Weather Condition Card -->
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
-                        <div class="card-body p-3 p-md-4 d-flex align-items-center">
+                        <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
+                            <!-- Desktop Icon -->
                             <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3 text-primary fs-3 d-none d-sm-block">
                                 <i class="bi bi-cloud-sun-fill" th:if="${weatherCondition == 'Clear' or weatherCondition == 'Sunny'}"></i>
                                 <i class="bi bi-cloud-rain-fill" th:if="${weatherCondition != 'Clear' and weatherCondition != 'Sunny'}"></i>
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="small text-muted fw-bold text-uppercase lh-sm"><i class="bi bi-cloud-sun-fill d-sm-none text-primary me-1"></i>Weather Condition</div>
-                                <div class="fw-bold fs-5 text-dark mt-1 text-break" th:text="${weatherCondition}">Clear</div>
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-2 small d-inline-block">Live Feed</span>
+                            <div class="flex-grow-1 text-center text-sm-start w-100">
+                                <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
+                                    <!-- Mobile Centered Icon -->
+                                    <i class="bi bi-cloud-sun-fill d-sm-none text-primary mb-1 d-block fs-4" th:if="${weatherCondition == 'Clear' or weatherCondition == 'Sunny'}"></i>
+                                    <i class="bi bi-cloud-rain-fill d-sm-none text-primary mb-1 d-block fs-4" th:if="${weatherCondition != 'Clear' and weatherCondition != 'Sunny'}"></i>
+                                    Weather <span class="d-none d-sm-inline">Condition</span>
+                                </div>
+                                <div class="fw-bold fs-6 fs-sm-5 text-dark mt-1 text-truncate lh-1" th:text="${weatherCondition}">Clear</div>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-2 d-inline-block text-truncate" style="font-size: 0.65rem; max-width: 100%;">Live Feed</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Temperature Card -->
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
-                        <div class="card-body p-3 p-md-4 d-flex align-items-center">
+                        <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
+                            <!-- Desktop Icon -->
                             <div class="bg-warning bg-opacity-10 p-3 rounded-4 me-3 text-warning fs-3 d-none d-sm-block">
                                 <i class="bi bi-thermometer-half"></i>
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="small text-muted fw-bold text-uppercase lh-sm"><i class="bi bi-thermometer-half d-sm-none text-warning me-1"></i>Temperature</div>
-                                <div class="fw-bold fs-5 text-dark weather-value mt-1" th:text="${temperature} + ' °C'">0.0 °C</div>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-2 small d-inline-block">Normal</span>
+                            <div class="flex-grow-1 text-center text-sm-start w-100">
+                                <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
+                                    <!-- Mobile Centered Icon -->
+                                    <i class="bi bi-thermometer-half d-sm-none text-warning mb-1 d-block fs-4"></i>
+                                    Temp<span class="d-none d-sm-inline">erature</span>
+                                </div>
+                                <div class="fw-bold fs-6 fs-sm-5 text-dark weather-value mt-1 lh-1" th:text="${temperature} + ' °C'">0.0 °C</div>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-2 d-inline-block text-truncate" style="font-size: 0.65rem; max-width: 100%;">Normal</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Rainfall Card -->
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
-                        <div class="card-body p-3 p-md-4 d-flex align-items-center">
+                        <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
+                            <!-- Desktop Icon -->
                             <div class="bg-info bg-opacity-10 p-3 rounded-4 me-3 text-info fs-3 d-none d-sm-block">
                                 <i class="bi bi-cloud-rain"></i>
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="small text-muted fw-bold text-uppercase lh-sm"><i class="bi bi-cloud-rain d-sm-none text-info me-1"></i>Rainfall Rate</div>
-                                <div class="fw-bold fs-5 text-dark weather-value mt-1" th:text="${rainUsed} + ' mm/hr'">0.0 mm/hr</div>
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-2 small d-inline-block" th:if="${T(java.lang.Double).parseDouble(rainUsed) == 0.0}">No Rain</span>
-                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 mt-2 small d-inline-block" th:if="${T(java.lang.Double).parseDouble(rainUsed) > 0.0 and T(java.lang.Double).parseDouble(rainUsed) < 7.5}">Light Rain</span>
-                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 mt-2 small d-inline-block" th:if="${T(java.lang.Double).parseDouble(rainUsed) >= 7.5}">Heavy Rain</span>
+                            <div class="flex-grow-1 text-center text-sm-start w-100">
+                                <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
+                                    <!-- Mobile Centered Icon -->
+                                    <i class="bi bi-cloud-rain d-sm-none text-info mb-1 d-block fs-4"></i>
+                                    Rainfall <span class="d-none d-sm-inline">Rate</span>
+                                </div>
+                                <div class="fw-bold fs-6 fs-sm-5 text-dark weather-value mt-1 lh-1" th:text="${rainUsed} + ' mm/hr'">0.0 mm/hr</div>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-2 d-inline-block text-truncate" style="font-size: 0.65rem; max-width: 100%;" th:if="${T(java.lang.Double).parseDouble(rainUsed) == 0.0}">No Rain</span>
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 mt-2 d-inline-block text-truncate" style="font-size: 0.65rem; max-width: 100%;" th:if="${T(java.lang.Double).parseDouble(rainUsed) > 0.0 and T(java.lang.Double).parseDouble(rainUsed) < 7.5}">Light Rain</span>
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 mt-2 d-inline-block text-truncate" style="font-size: 0.65rem; max-width: 100%;" th:if="${T(java.lang.Double).parseDouble(rainUsed) >= 7.5}">Heavy Rain</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Wind Speed Card -->
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
-                        <div class="card-body p-3 p-md-4 d-flex align-items-center">
+                        <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
+                            <!-- Desktop Icon -->
                             <div class="bg-success bg-opacity-10 p-3 rounded-4 me-3 text-success fs-3 d-none d-sm-block">
                                 <i class="bi bi-wind"></i>
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="small text-muted fw-bold text-uppercase lh-sm"><i class="bi bi-wind d-sm-none text-success me-1"></i>Wind Speed</div>
-                                <div class="fw-bold fs-5 text-dark weather-value mt-1" th:text="${windUsed} + ' km/h'">0.0 km/h</div>
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-2 small d-inline-block">Calm & Safe</span>
+                            <div class="flex-grow-1 text-center text-sm-start w-100">
+                                <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
+                                    <!-- Mobile Centered Icon -->
+                                    <i class="bi bi-wind d-sm-none text-success mb-1 d-block fs-4"></i>
+                                    Wind <span class="d-none d-sm-inline">Speed</span>
+                                </div>
+                                <div class="fw-bold fs-6 fs-sm-5 text-dark weather-value mt-1 lh-1" th:text="${windUsed} + ' km/h'">0.0 km/h</div>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 mt-2 d-inline-block text-truncate" style="font-size: 0.65rem; max-width: 100%;">Calm & Safe</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Humidity Card -->
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
-                        <div class="card-body p-3 p-md-4 d-flex align-items-center">
+                        <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
+                            <!-- Desktop Icon -->
                             <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3 text-primary fs-3 d-none d-sm-block">
                                 <i class="bi bi-droplet-half"></i>
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="small text-muted fw-bold text-uppercase lh-sm"><i class="bi bi-droplet-half d-sm-none text-primary me-1"></i>Relative Humidity</div>
-                                <div class="fw-bold fs-5 text-dark weather-value mt-1" th:text="${humidity} + '%'">0%</div>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-2 small d-inline-block">Atmospheric</span>
+                            <div class="flex-grow-1 text-center text-sm-start w-100">
+                                <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
+                                    <!-- Mobile Centered Icon -->
+                                    <i class="bi bi-droplet-half d-sm-none text-primary mb-1 d-block fs-4"></i>
+                                    <span class="d-none d-sm-inline">Relative </span>Humidity
+                                </div>
+                                <div class="fw-bold fs-6 fs-sm-5 text-dark weather-value mt-1 lh-1" th:text="${humidity} + '%'">0%</div>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-2 d-inline-block text-truncate" style="font-size: 0.65rem; max-width: 100%;">Atmospheric</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Cloud Cover Card -->
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
-                        <div class="card-body p-3 p-md-4 d-flex align-items-center">
+                        <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
+                            <!-- Desktop Icon -->
                             <div class="bg-secondary bg-opacity-10 p-3 rounded-4 me-3 text-secondary fs-3 d-none d-sm-block">
                                 <i class="bi bi-clouds"></i>
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="small text-muted fw-bold text-uppercase lh-sm"><i class="bi bi-clouds d-sm-none text-secondary me-1"></i>Cloud Cover</div>
-                                <div class="fw-bold fs-5 text-dark weather-value mt-1" th:text="${cloudCover} + '%'">0%</div>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-2 small d-inline-block">Sky Status</span>
+                            <div class="flex-grow-1 text-center text-sm-start w-100">
+                                <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
+                                    <!-- Mobile Centered Icon -->
+                                    <i class="bi bi-clouds d-sm-none text-secondary mb-1 d-block fs-4"></i>
+                                    Cloud <span class="d-none d-sm-inline">Cover</span>
+                                </div>
+                                <div class="fw-bold fs-6 fs-sm-5 text-dark weather-value mt-1 lh-1" th:text="${cloudCover} + '%'">0%</div>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mt-2 d-inline-block text-truncate" style="font-size: 0.65rem; max-width: 100%;">Sky Status</span>
                             </div>
                         </div>
                     </div>
@@ -510,35 +548,6 @@
                 </div>
             </div>
 
-            <!-- Admin Manual Advisory Broadcast Card (Admin Only) -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
-                <div class="card-body p-4">
-                    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-3">
-                        <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3 text-success fs-4 d-none d-sm-block">
-                            <i class="bi bi-megaphone-fill"></i>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold text-dark mb-1"><i class="bi bi-megaphone-fill d-sm-none text-success me-2"></i>Broadcast Custom Advisory</h5>
-                            <p class="text-muted small mb-0 lh-sm">Manually compose and push a weather announcement to all active users.</p>
-                        </div>
-                    </div>
-
-                    <form action="/admin/send-advisory" method="post">
-                        <div class="mb-3">
-                            <label for="advisoryTitle" class="form-label small fw-bold text-uppercase text-secondary">Advisory Title</label>
-                            <input type="text" class="form-control rounded-3" id="advisoryTitle" name="title" value="FTNHS Weather Advisory" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="advisoryBody" class="form-label small fw-bold text-uppercase text-secondary">Message Body</label>
-                            <textarea class="form-control rounded-3" id="advisoryBody" name="body" rows="3" placeholder="Type your custom weather announcement, class suspension note, or instruction here..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success fw-medium btn-touch-target w-100 w-md-auto">
-                            <i class="bi bi-send-fill me-2"></i>Send Broadcast Now
-                        </button>
-                    </form>
-                </div>
-            </div>
-
             <!-- Notification History Section -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
                 <div class="card-body p-3 p-md-4">
@@ -575,6 +584,35 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <!-- Admin Manual Advisory Broadcast Card (Admin Only) -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-3">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3 text-success fs-4 d-none d-sm-block">
+                            <i class="bi bi-megaphone-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1"><i class="bi bi-megaphone-fill d-sm-none text-success me-2"></i>Broadcast Custom Advisory</h5>
+                            <p class="text-muted small mb-0 lh-sm">Manually compose and push a weather announcement to all active users.</p>
+                        </div>
+                    </div>
+
+                    <form action="/admin/send-advisory" method="post">
+                        <div class="mb-3">
+                            <label for="advisoryTitle" class="form-label small fw-bold text-uppercase text-secondary">Advisory Title</label>
+                            <input type="text" class="form-control rounded-3" id="advisoryTitle" name="title" value="FTNHS Weather Advisory" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="advisoryBody" class="form-label small fw-bold text-uppercase text-secondary">Message Body</label>
+                            <textarea class="form-control rounded-3" id="advisoryBody" name="body" rows="3" placeholder="Type your custom weather announcement, class suspension note, or instruction here..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success fw-medium btn-touch-target w-100 w-md-auto">
+                            <i class="bi bi-send-fill me-2"></i>Send Broadcast Now
+                        </button>
+                    </form>
                 </div>
             </div>
             
