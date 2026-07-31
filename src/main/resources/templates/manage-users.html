@@ -71,6 +71,30 @@
             background-color: #198754 !important;
             color: #fff !important;
         }
+
+        /* Task 1.3: Mobile Table Optimization */
+        @media (max-width: 640px) {
+            .table-mobile-cards table, .table-mobile-cards thead, 
+            .table-mobile-cards tbody, .table-mobile-cards th, 
+            .table-mobile-cards td, .table-mobile-cards tr { display: block; }
+            .table-mobile-cards thead tr { position: absolute; top: -9999px; left: -9999px; }
+            .table-mobile-cards tr { 
+                border: 1px solid rgba(0,0,0,0.1); border-radius: 0.75rem; 
+                margin-bottom: 1rem; padding: 1rem; background-color: #ffffff; 
+                display: flex; flex-direction: column; gap: 0.75rem; 
+                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); 
+            }
+            .table-mobile-cards td { 
+                border: none; border-bottom: 1px solid #f8f9fa; position: relative; 
+                padding: 0 0 0.5rem 0; display: flex; justify-content: space-between; 
+                align-items: center; text-align: right; 
+            }
+            .table-mobile-cards td:last-child { border-bottom: 0; padding-bottom: 0; }
+            .table-mobile-cards td:before { 
+                content: attr(data-label); font-weight: 700; text-transform: uppercase; 
+                font-size: 0.75rem; color: #6c757d; text-align: left; padding-right: 1rem; 
+            }
+        }
     </style>
 </head>
 <body>
@@ -137,7 +161,7 @@
 
             <div class="card border-0 shadow-sm rounded-4 bg-white">
                 <div class="card-body p-0">
-                    <div class="table-responsive">
+                    <div class="table-responsive table-mobile-cards">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
@@ -154,22 +178,22 @@
                                     <td colspan="6" class="text-center py-4 text-muted">No user accounts found.</td>
                                 </tr>
                                 <tr th:each="user : ${users}">
-                                    <td class="ps-4">
+                                    <td class="ps-4" data-label="Name / Position">
                                         <div class="fw-medium text-dark" th:text="${user.name}">John Doe</div>
                                         <div class="small text-muted" th:text="${user.position != null ? user.position : 'N/A'}">Teacher I</div>
                                     </td>
-                                    <td class="text-secondary" th:text="${user.username}">johndoe</td>
-                                    <td>
+                                    <td data-label="Username" class="text-secondary" th:text="${user.username}">johndoe</td>
+                                    <td data-label="Contact & Dept">
                                         <div class="small text-dark" th:text="${user.email}">john@ftnhs.edu.ph</div>
                                         <div class="small text-muted"><span th:text="${user.department != null ? user.department : 'General'}">DepEd</span> &bull; <span th:text="${user.phone != null ? user.phone : 'No phone'}">09123456789</span></div>
                                     </td>
-                                    <td>
+                                    <td data-label="Role">
                                         <span class="badge" th:classappend="${user.role == 'ADMIN' ? 'bg-danger bg-opacity-15 text-danger border border-danger border-opacity-25' : 'bg-success bg-opacity-15 text-success border border-success border-opacity-25'}" th:text="${user.role}">ADMIN</span>
                                     </td>
-                                    <td>
+                                    <td data-label="Status">
                                         <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-25" th:text="${user.status}">ACTIVE</span>
                                     </td>
-                                    <td class="text-end pe-4">
+                                    <td class="text-end pe-4" data-label="Actions">
                                         <button class="btn btn-sm btn-outline-secondary me-1 mb-1 mb-md-0" 
                                                 th:data-id="${user.id}"
                                                 th:data-username="${user.username}"
