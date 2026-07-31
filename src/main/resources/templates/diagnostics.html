@@ -18,10 +18,10 @@
             --primary-font: 'Inter', sans-serif;
             --heading-font: 'Poppins', sans-serif;
             --mono-font: 'Roboto Mono', monospace;
-            --header-bg: #198754; /* Balanced Medium Green */
-            --drawer-bg: #f4f8f5; /* Clean Soft Pale Green */
+            --header-bg: #198754; 
+            --drawer-bg: #f4f8f5; 
             --drawer-text: #1f3824;
-            --hover-bg: #e2ede5; /* Contrasting hover state */
+            --hover-bg: #e2ede5; 
         }
         body {
             font-family: var(--primary-font);
@@ -65,12 +65,36 @@
             color: #fff;
             border-color: var(--header-bg);
         }
+
+        /* Task 1.3: Mobile Table Optimization */
+        @media (max-width: 640px) {
+            .table-mobile-cards table, .table-mobile-cards thead, 
+            .table-mobile-cards tbody, .table-mobile-cards th, 
+            .table-mobile-cards td, .table-mobile-cards tr { display: block; }
+            .table-mobile-cards thead tr { position: absolute; top: -9999px; left: -9999px; }
+            .table-mobile-cards tr { 
+                border: 1px solid rgba(0,0,0,0.1); border-radius: 0.75rem; 
+                margin-bottom: 1rem; padding: 1rem; background-color: #ffffff; 
+                display: flex; flex-direction: column; gap: 0.75rem; 
+                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); 
+            }
+            .table-mobile-cards td { 
+                border: none; border-bottom: 1px solid #f8f9fa; position: relative; 
+                padding: 0 0 0.5rem 0; display: flex; justify-content: space-between; 
+                align-items: center; text-align: right; 
+            }
+            .table-mobile-cards td:last-child { border-bottom: 0; padding-bottom: 0; }
+            .table-mobile-cards td:before { 
+                content: attr(data-label); font-weight: 700; text-transform: uppercase; 
+                font-size: 0.75rem; color: #6c757d; text-align: left; padding-right: 1rem; 
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="content-wrap">
-        <!-- Navigation Bar with Medium Green Theme -->
+        <!-- Navigation Bar -->
         <nav class="navbar navbar-dark app-header mb-4 shadow-sm">
             <div class="container">
                 <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2 text-warning"></i>FTNHS Weather Hub</a>
@@ -80,7 +104,7 @@
             </div>
         </nav>
 
-        <!-- Offcanvas Sidebar Drawer (Soft Pale Green with High Contrast Hover) -->
+        <!-- Offcanvas Sidebar Drawer -->
         <div class="offcanvas offcanvas-start custom-drawer" tabindex="-1" id="sidebarDrawer" aria-labelledby="sidebarDrawerLabel">
             <div class="offcanvas-header border-bottom border-success border-opacity-25 px-4 py-3">
                 <h5 class="offcanvas-title fw-bold" id="sidebarDrawerLabel"><i class="bi bi-cloud-sun me-2 text-success"></i>FTNHS Weather Hub</h5>
@@ -94,7 +118,6 @@
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/analytics"><i class="bi bi-graph-up-arrow me-2 text-info"></i>Analytics</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/about"><i class="bi bi-info-circle me-2 text-secondary"></i>About System</a></li>
                     
-                    <!-- Admin-Only Navigation Links -->
                     <th:block th:if="${isAdminLoggedIn}">
                         <li class="nav-item mt-3 pt-3 border-top border-success border-opacity-25">
                             <span class="text-muted small text-uppercase px-3 fw-bold tracking-wider">Admin Controls</span>
@@ -119,8 +142,6 @@
         </div>
 
         <div class="container pb-5">
-            
-            <!-- Page Header -->
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
                 <div>
                     <h2 class="fw-bold text-dark mb-1"><i class="bi bi-cpu me-2 text-primary"></i>System Diagnostics & Health Status</h2>
@@ -135,8 +156,6 @@
 
             <!-- Health Status Cards Row -->
             <div class="row g-4 mb-4">
-                
-                <!-- Open-Meteo API Status -->
                 <div class="col-12 col-md-6">
                     <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
                         <div class="card-body p-4">
@@ -163,7 +182,6 @@
                     </div>
                 </div>
 
-                <!-- Database / Supabase Status -->
                 <div class="col-12 col-md-6">
                     <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
                         <div class="card-body p-4">
@@ -188,14 +206,13 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            <!-- Database Statistics Table -->
+            <!-- Database Statistics Table (Mobile Stacked Cards Enabled) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
                 <div class="card-body p-4">
                     <h5 class="fw-bold text-dark mb-3"><i class="bi bi-table me-2 text-primary"></i>Database Table Metrics</h5>
-                    <div class="table-responsive">
+                    <div class="table-responsive table-mobile-cards">
                         <table class="table table-bordered align-middle mb-0 small">
                             <thead class="table-light">
                                 <tr>
@@ -206,19 +223,19 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="fw-bold text-dark"><i class="bi bi-cloud-sun me-1 text-primary"></i> Weather Logs (`weather_logs`)</td>
-                                    <td class="mono-val fw-bold text-primary" th:text="${totalWeatherLogs}">0</td>
-                                    <td class="mono-val text-muted" th:text="${lastLogTime}">N/A</td>
+                                    <td data-label="Entity / Table Name" class="fw-bold text-dark"><i class="bi bi-cloud-sun me-1 text-primary"></i> Weather Logs (`weather_logs`)</td>
+                                    <td data-label="Total Records" class="mono-val fw-bold text-primary" th:text="${totalWeatherLogs}">0</td>
+                                    <td data-label="Latest Timestamp" class="mono-val text-muted" th:text="${lastLogTime}">N/A</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold text-dark"><i class="bi bi-shield-check me-1 text-success"></i> Learning Status Logs (`learning_status_logs`)</td>
-                                    <td class="mono-val fw-bold text-success" th:text="${totalStatusLogs}">0</td>
-                                    <td class="text-muted">Automated / Manual Daily Evaluations</td>
+                                    <td data-label="Entity / Table Name" class="fw-bold text-dark"><i class="bi bi-shield-check me-1 text-success"></i> Learning Status Logs (`learning_status_logs`)</td>
+                                    <td data-label="Total Records" class="mono-val fw-bold text-success" th:text="${totalStatusLogs}">0</td>
+                                    <td data-label="Latest Timestamp" class="text-muted">Automated / Manual Daily Evaluations</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold text-dark"><i class="bi bi-people me-1 text-warning"></i> Admin Users (`users`)</td>
-                                    <td class="mono-val fw-bold text-warning" th:text="${totalUsers}">0</td>
-                                    <td class="text-muted">Active Authorized Administrators</td>
+                                    <td data-label="Entity / Table Name" class="fw-bold text-dark"><i class="bi bi-people me-1 text-warning"></i> Admin Users (`users`)</td>
+                                    <td data-label="Total Records" class="mono-val fw-bold text-warning" th:text="${totalUsers}">0</td>
+                                    <td data-label="Latest Timestamp" class="text-muted">Active Authorized Administrators</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -233,12 +250,6 @@
         <div class="container text-center">
             <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">FTNHS Weather Hub</p>
             <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
-            <div class="d-flex justify-content-center flex-row flex-nowrap gap-2 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.68rem;">
-                <span class="text-nowrap"><i class="bi bi-server me-1"></i>Spring Boot</span>
-                <span class="text-nowrap"><i class="bi bi-cloud-sun me-1"></i>Open-Meteo</span>
-                <span class="text-nowrap"><i class="bi bi-shield-check me-1"></i>Supabase</span>
-                <span class="text-nowrap"><i class="bi bi-hdd-network me-1"></i>Render</span>
-            </div>
         </div>
     </footer>
 

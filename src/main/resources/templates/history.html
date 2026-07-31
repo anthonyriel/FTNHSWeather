@@ -80,6 +80,30 @@
             color: #fff;
             border-color: var(--header-bg);
         }
+
+        /* Task 1.3: Mobile Table Optimization */
+        @media (max-width: 640px) {
+            .table-mobile-cards table, .table-mobile-cards thead, 
+            .table-mobile-cards tbody, .table-mobile-cards th, 
+            .table-mobile-cards td, .table-mobile-cards tr { display: block; }
+            .table-mobile-cards thead tr { position: absolute; top: -9999px; left: -9999px; }
+            .table-mobile-cards tr { 
+                border: 1px solid rgba(0,0,0,0.1); border-radius: 0.75rem; 
+                margin-bottom: 1rem; padding: 1rem; background-color: #ffffff; 
+                display: flex; flex-direction: column; gap: 0.75rem; 
+                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); 
+            }
+            .table-mobile-cards td { 
+                border: none; border-bottom: 1px solid #f8f9fa; position: relative; 
+                padding: 0 0 0.5rem 0; display: flex; justify-content: space-between; 
+                align-items: center; text-align: right; 
+            }
+            .table-mobile-cards td:last-child { border-bottom: 0; padding-bottom: 0; }
+            .table-mobile-cards td:before { 
+                content: attr(data-label); font-weight: 700; text-transform: uppercase; 
+                font-size: 0.75rem; color: #6c757d; text-align: left; padding-right: 1rem; 
+            }
+        }
     </style>
 </head>
 <body>
@@ -181,10 +205,10 @@
                 </div>
             </div>
 
-            <!-- Data Table View -->
+            <!-- Data Table View (Mobile Stacked Cards Enabled) -->
             <div class="card border-0 shadow-sm rounded-4 bg-white">
                 <div class="card-body p-0">
-                    <div class="table-responsive">
+                    <div class="table-responsive table-mobile-cards">
                         <table class="table table-hover table-custom mb-0 align-middle">
                             <thead>
                                 <tr>
@@ -200,15 +224,15 @@
                                     <td colspan="5" class="text-center py-4 text-muted">No historical data available yet.</td>
                                 </tr>
                                 <tr th:each="log : ${weatherLogs}">
-                                    <td class="ps-4 fw-medium text-dark" th:text="${#temporals.format(log.timestamp, 'MMM dd, yyyy - hh:mm a')}"></td>
-                                    <td>
+                                    <td data-label="Timestamp" class="ps-4 fw-medium text-dark" th:text="${#temporals.format(log.timestamp, 'MMM dd, yyyy - hh:mm a')}"></td>
+                                    <td data-label="Condition">
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" th:text="${log.weatherCondition}">Clear</span>
                                     </td>
-                                    <td><span th:text="${log.temperature != null ? log.temperature : '0.0'}"></span> °C</td>
-                                    <td class="fw-medium" th:classappend="${log.precipitationMm > 7.5 ? 'text-danger' : 'text-dark'}">
+                                    <td data-label="Temperature"><span th:text="${log.temperature != null ? log.temperature : '0.0'}"></span> °C</td>
+                                    <td data-label="Rainfall" class="fw-medium" th:classappend="${log.precipitationMm > 7.5 ? 'text-danger' : 'text-dark'}">
                                         <span th:text="${log.precipitationMm}"></span> mm
                                     </td>
-                                    <td><span th:text="${log.windSpeed != null ? log.windSpeed : '0.0'}"></span> km/h</td>
+                                    <td data-label="Wind Speed"><span th:text="${log.windSpeed != null ? log.windSpeed : '0.0'}"></span> km/h</td>
                                 </tr>
                             </tbody>
                         </table>

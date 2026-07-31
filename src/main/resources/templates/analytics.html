@@ -214,16 +214,45 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Chart.js Rendering Scripts -->
+    <!-- Chart.js Rendering Scripts (Mobile Optimized) -->
     <script th:inline="javascript">
         const labels = /*[[${timestamps}]]*/ [];
         const tempData = /*[[${temperatures}]]*/ [];
         const rainData = /*[[${precipitation}]]*/ [];
         const windData = /*[[${windSpeeds}]]*/ [];
 
+        // Reusable mobile-optimized chart configuration
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false,
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxRotation: 0,
+                        maxTicksLimit: window.innerWidth < 640 ? 6 : 12 
+                    },
+                    grid: { display: false }
+                }
+            }
+        };
+
         // Temperature Chart
         const ctxTemp = document.getElementById('tempChart').getContext('2d');
-        new Chart(ctxTemp, {
+        const chartTemp = new Chart(ctxTemp, {
             type: 'line',
             data: {
                 labels: labels,
@@ -237,12 +266,12 @@
                     tension: 0.3
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: commonOptions
         });
 
         // Rainfall Chart
         const ctxRain = document.getElementById('rainChart').getContext('2d');
-        new Chart(ctxRain, {
+        const chartRain = new Chart(ctxRain, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -253,12 +282,12 @@
                     borderWidth: 1
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: commonOptions
         });
 
         // Wind Speed Chart
         const ctxWind = document.getElementById('windChart').getContext('2d');
-        new Chart(ctxWind, {
+        const chartWind = new Chart(ctxWind, {
             type: 'line',
             data: {
                 labels: labels,
@@ -272,7 +301,18 @@
                     tension: 0.3
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: commonOptions
+        });
+
+        // Update tick limits on resize to handle mobile orientation changes
+        window.addEventListener('resize', function() {
+            const limit = window.innerWidth < 640 ? 6 : 12;
+            [chartTemp, chartRain, chartWind].forEach(chart => {
+                if(chart) {
+                    chart.options.scales.x.ticks.maxTicksLimit = limit;
+                    chart.update();
+                }
+            });
         });
     </script>
 </body>

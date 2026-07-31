@@ -221,20 +221,17 @@
                 </div>
             </div>
 
-            <!-- Main Status Banner (Balanced Desktop Alignment & Preserved Mobile View) -->
+            <!-- Main Status Banner -->
             <div class="card border-0 shadow-lg mb-4 rounded-4 text-white" th:classappend="${bannerClass}">
                 <div class="card-body p-4 p-md-5 position-relative">
                     
-                    <!-- Header Section: School Name & Clock Pill (Aligned to Match Decision Card Width on Desktop) -->
                     <div class="row align-items-center mb-4 g-3">
-                        <!-- School Name Column (Matches Left Content Width) -->
                         <div class="col-12 col-md-7">
                             <div class="text-uppercase small fw-bold opacity-90 letter-spacing-1 d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-1 gap-md-2">
                                 <i class="bi bi-building fs-4 fs-md-5 mb-1 mb-md-0"></i> 
                                 <span class="text-nowrap">Fermin Tayabas National High School</span>
                             </div>
                         </div>
-                        <!-- Clock Pill Column (Matches Right Decision Card Width on Desktop) -->
                         <div class="col-12 col-md-5">
                             <div class="bg-dark bg-opacity-25 px-4 py-2 rounded-pill weather-value w-100 text-center d-flex align-items-center justify-content-center border border-light border-opacity-10 shadow-sm">
                                 <i class="bi bi-clock me-2"></i> <span id="liveClock" class="fw-medium text-nowrap">Loading system time...</span>
@@ -242,23 +239,21 @@
                         </div>
                     </div>
 
-                    <!-- Content Section: Mode Details & Inner Card -->
                     <div class="row align-items-center g-4">
-                        <!-- Left/Top: Learning Mode Text -->
                         <div class="col-12 col-md-7">
-                            <div class="my-2">
-                                <h5 class="fw-bold mb-2 opacity-90 text-center" style="letter-spacing: 0.5px;">Today's Learning Mode</h5>
+                            <!-- Added text-center for mobile and text-md-start for desktop alignment -->
+                            <div class="my-2 text-center text-md-start">
+                                <h5 class="fw-bold mb-2 opacity-90" style="letter-spacing: 0.5px;">Today's Learning Mode</h5>
                                 <h1 class="display-4 fw-bolder mb-3 d-flex align-items-center justify-content-center justify-content-md-start gap-2 flex-wrap" style="letter-spacing: -1px;">
                                     <span th:if="${learningMode == 'IN_PERSON'}"><i class="bi bi-check-circle-fill"></i> HAYO <span class="fs-4 opacity-75 fw-normal ms-1">(In-Person)</span></span>
                                     <span th:if="${learningMode == 'MODULAR'}"><i class="bi bi-book-half"></i> HINAY <span class="fs-4 opacity-75 fw-normal ms-1">(Modular)</span></span>
                                     <span th:if="${learningMode == 'CHECK_IN'}"><i class="bi bi-heart-pulse-fill"></i> HINGA <span class="fs-4 opacity-75 fw-normal ms-1">(Check-in)</span></span>
                                     <span th:if="${learningMode == 'SUSPENDED'}"><i class="bi bi-x-octagon-fill"></i> HINTO <span class="fs-4 opacity-75 fw-normal ms-1">(Suspended)</span></span>
                                 </h1>
-                                <p class="fs-6 fs-md-5 mb-0 fw-medium lh-base text-center text-md-start pe-md-4" style="opacity: 0.95;" th:text="${decisionReason}">Status updated based on current conditions.</p>
+                                <p class="fs-6 fs-md-5 mb-0 fw-medium lh-base pe-md-4" style="opacity: 0.95;" th:text="${decisionReason}">Status updated based on current conditions.</p>
                             </div>
                         </div>
 
-                        <!-- Right/Bottom: Decision Confidence Inner Card -->
                         <div class="col-12 col-md-5">
                             <div class="bg-dark bg-opacity-25 rounded-4 p-4 w-100 border border-light border-opacity-10 shadow-sm">
                                 <div class="d-flex justify-content-between align-items-end mb-2">
@@ -289,33 +284,28 @@
 
             <!-- Comprehensive Weather Metrics Grid -->
             <div class="mb-3 mt-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                <!-- Heading: Forced to one line on desktop, allowed to wrap naturally on tiny mobile screens -->
                 <h4 class="fw-bold text-dark mb-0 fs-5 fs-md-4 flex-shrink-0">
                     <i class="bi bi-cloud-sun me-2 text-primary"></i>
                     <span class="d-none d-md-inline" style="white-space: nowrap;">Current Meteorological Metrics</span>
                     <span class="d-md-none">Current Meteorological Metrics</span>
                 </h4>
-                <!-- Button: Auto-width on desktop (w-md-auto) and pushed to the right (ms-md-auto) -->
                 <button onclick="subscribeUserToPush()" class="btn btn-outline-success btn-touch-target fw-medium shadow-sm w-100 w-md-auto ms-md-auto flex-shrink-0">
                     🔔 Enable Phone Notifications
                 </button>
             </div>
             
-            <!-- Mobile 2-Column Grid (g-2 for mobile, g-4 for desktop) -->
             <div class="row g-2 g-md-4 mb-4">
                 
                 <!-- Weather Condition Card -->
                 <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
                         <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
-                            <!-- Desktop Icon -->
                             <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3 text-primary fs-3 d-none d-sm-block">
                                 <i class="bi bi-cloud-sun-fill" th:if="${weatherCondition == 'Clear' or weatherCondition == 'Sunny'}"></i>
                                 <i class="bi bi-cloud-rain-fill" th:if="${weatherCondition != 'Clear' and weatherCondition != 'Sunny'}"></i>
                             </div>
                             <div class="flex-grow-1 text-center text-sm-start w-100">
                                 <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
-                                    <!-- Mobile Centered Icon -->
                                     <i class="bi bi-cloud-sun-fill d-sm-none text-primary mb-1 d-block fs-4" th:if="${weatherCondition == 'Clear' or weatherCondition == 'Sunny'}"></i>
                                     <i class="bi bi-cloud-rain-fill d-sm-none text-primary mb-1 d-block fs-4" th:if="${weatherCondition != 'Clear' and weatherCondition != 'Sunny'}"></i>
                                     Weather <span class="d-none d-sm-inline">Condition</span>
@@ -331,13 +321,11 @@
                 <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
                         <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
-                            <!-- Desktop Icon -->
                             <div class="bg-warning bg-opacity-10 p-3 rounded-4 me-3 text-warning fs-3 d-none d-sm-block">
                                 <i class="bi bi-thermometer-half"></i>
                             </div>
                             <div class="flex-grow-1 text-center text-sm-start w-100">
                                 <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
-                                    <!-- Mobile Centered Icon -->
                                     <i class="bi bi-thermometer-half d-sm-none text-warning mb-1 d-block fs-4"></i>
                                     Temp<span class="d-none d-sm-inline">erature</span>
                                 </div>
@@ -352,13 +340,11 @@
                 <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
                         <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
-                            <!-- Desktop Icon -->
                             <div class="bg-info bg-opacity-10 p-3 rounded-4 me-3 text-info fs-3 d-none d-sm-block">
                                 <i class="bi bi-cloud-rain"></i>
                             </div>
                             <div class="flex-grow-1 text-center text-sm-start w-100">
                                 <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
-                                    <!-- Mobile Centered Icon -->
                                     <i class="bi bi-cloud-rain d-sm-none text-info mb-1 d-block fs-4"></i>
                                     Rainfall <span class="d-none d-sm-inline">Rate</span>
                                 </div>
@@ -375,13 +361,11 @@
                 <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
                         <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
-                            <!-- Desktop Icon -->
                             <div class="bg-success bg-opacity-10 p-3 rounded-4 me-3 text-success fs-3 d-none d-sm-block">
                                 <i class="bi bi-wind"></i>
                             </div>
                             <div class="flex-grow-1 text-center text-sm-start w-100">
                                 <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
-                                    <!-- Mobile Centered Icon -->
                                     <i class="bi bi-wind d-sm-none text-success mb-1 d-block fs-4"></i>
                                     Wind <span class="d-none d-sm-inline">Speed</span>
                                 </div>
@@ -396,13 +380,11 @@
                 <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
                         <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
-                            <!-- Desktop Icon -->
                             <div class="bg-primary bg-opacity-10 p-3 rounded-4 me-3 text-primary fs-3 d-none d-sm-block">
                                 <i class="bi bi-droplet-half"></i>
                             </div>
                             <div class="flex-grow-1 text-center text-sm-start w-100">
                                 <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
-                                    <!-- Mobile Centered Icon -->
                                     <i class="bi bi-droplet-half d-sm-none text-primary mb-1 d-block fs-4"></i>
                                     <span class="d-none d-sm-inline">Relative </span>Humidity
                                 </div>
@@ -417,13 +399,11 @@
                 <div class="col-6 col-md-6 col-lg-4">
                     <div class="card border-0 shadow-sm stat-card h-100 bg-white">
                         <div class="card-body p-2 p-sm-3 p-md-4 d-flex align-items-center">
-                            <!-- Desktop Icon -->
                             <div class="bg-secondary bg-opacity-10 p-3 rounded-4 me-3 text-secondary fs-3 d-none d-sm-block">
                                 <i class="bi bi-clouds"></i>
                             </div>
                             <div class="flex-grow-1 text-center text-sm-start w-100">
                                 <div class="text-muted fw-bold text-uppercase lh-sm" style="font-size: 0.7rem;">
-                                    <!-- Mobile Centered Icon -->
                                     <i class="bi bi-clouds d-sm-none text-secondary mb-1 d-block fs-4"></i>
                                     Cloud <span class="d-none d-sm-inline">Cover</span>
                                 </div>
@@ -479,7 +459,7 @@
                 </div>
             </div>
 
-            <!-- Dashboard Summary Mini Cards (2x2 Grid optimized) -->
+            <!-- Dashboard Summary Mini Cards -->
             <div class="row g-2 g-md-3 mb-4">
                 <div class="col-6 col-lg-3">
                     <div class="card border-0 shadow-sm rounded-4 p-2 p-sm-3 h-100 bg-white">
@@ -507,7 +487,7 @@
                 </div>
             </div>
 
-            <!-- Admin Override Controls (Admin Only) - Optimized for Mobile Stacking -->
+            <!-- Admin Override Controls -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>4H Manual Override</h5>
@@ -535,7 +515,7 @@
                 </div>
             </div>
 
-            <!-- Official DepEd Daily Report Quick Link (Admin Only) -->
+            <!-- Official DepEd Daily Report Quick Link -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                     <div>
@@ -576,7 +556,6 @@
                                 <tr th:each="log : ${notificationLogs}">
                                     <td class="ps-3 py-3">
                                         <div class="fw-bold text-dark text-break" th:text="${log.title}">FTNHS Weather Advisory</div>
-                                        <!-- Task 1.1: Added broadcast-body-text class for parsing + text-break for wrapping -->
                                         <div class="small text-secondary broadcast-body-text text-break lh-sm mt-1" th:text="${log.body}">Alert body text...</div>
                                     </td>
                                     <td class="pe-3 py-3 small text-muted weather-value text-end text-md-start text-nowrap align-top pt-3 pt-md-auto" th:text="${#temporals.format(log.sentAt, 'MMM dd, hh:mm a')}">Timestamp</td>
@@ -587,7 +566,7 @@
                 </div>
             </div>
 
-            <!-- Admin Manual Advisory Broadcast Card (Admin Only) -->
+            <!-- Admin Manual Advisory Broadcast Card -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4">
                     <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-3">
@@ -638,7 +617,7 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Task 1.1: Broadcast History JSON Parser -->
+    <!-- Broadcast History JSON Parser -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const bodyElements = document.querySelectorAll('.broadcast-body-text');

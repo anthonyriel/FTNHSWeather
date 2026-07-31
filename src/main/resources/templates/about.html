@@ -70,6 +70,21 @@
             justify-content: center;
             border-radius: 12px;
         }
+
+        /* Task 1.2: WCAG AA Contrast Compliance & Touch Targets */
+        .badge.bg-success, .bg-success { background-color: #15803d !important; color: #ffffff !important; } 
+        .text-success { color: #15803d !important; }
+        
+        .badge.bg-warning, .bg-warning { background-color: #d97706 !important; color: #ffffff !important; } 
+        .text-warning { color: #d97706 !important; }
+        
+        .badge.bg-info, .bg-info { background-color: #0284c7 !important; color: #ffffff !important; } 
+        .text-info { color: #0284c7 !important; }
+        
+        .badge.bg-danger, .bg-danger { background-color: #dc2626 !important; color: #ffffff !important; } 
+        .text-danger { color: #dc2626 !important; }
+        
+        .btn-touch-target { padding: 0.75rem 1rem !important; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -79,7 +94,7 @@
         <nav class="navbar navbar-dark app-header mb-4 shadow-sm">
             <div class="container">
                 <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2 text-warning"></i>FTNHS Weather Hub</a>
-                <button class="btn btn-outline-light btn-sm fw-medium px-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
+                <button class="btn btn-outline-light btn-sm fw-medium px-3 btn-touch-target" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
                     <i class="bi bi-list fs-5 me-1 align-middle"></i> Menu
                 </button>
             </div>
@@ -111,12 +126,12 @@
                 
                 <div class="pt-3 border-top border-success border-opacity-25">
                     <div th:if="${!isAdminLoggedIn}">
-                        <a href="/login" class="btn btn-outline-theme w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
+                        <a href="/login" class="btn btn-outline-theme w-100 fw-bold py-2 btn-touch-target"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
                     </div>
                     <div th:if="${isAdminLoggedIn}">
                         <div class="small text-muted mb-2"><i class="bi bi-person-circle text-success me-1"></i> Logged in as <strong class="text-dark" th:text="${adminName}">Admin</strong></div>
                         <form action="/logout" method="post">
-                            <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                            <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2 btn-touch-target"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
                         </form>
                     </div>
                 </div>
@@ -201,15 +216,15 @@
                                     <td class="text-secondary small">Clear skies or very light, manageable weather. Standard classroom instruction proceeds exactly as scheduled.</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold text-warning text-dark"><i class="bi bi-book-half me-1"></i> 2. Hinay (Ease-in)</td>
+                                    <td class="fw-bold text-warning"><i class="bi bi-book-half me-1"></i> 2. Hinay (Ease-in)</td>
                                     <td class="text-secondary small">7.5 to 15.0 mm/hr rain<br>or &ge; 40 km/h wind</td>
-                                    <td><span class="badge bg-warning text-dark px-3 py-2 w-100">MODULAR</span></td>
+                                    <td><span class="badge bg-warning px-3 py-2 w-100">MODULAR</span></td>
                                     <td class="text-secondary small">Mild weather disruptions. Shift to Alternative Delivery Modes (ADM). Deadlines are relaxed to accommodate intermittent power/internet.</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold text-info text-dark"><i class="bi bi-heart-pulse-fill me-1"></i> 3. Hinga (Check-in)</td>
+                                    <td class="fw-bold text-info"><i class="bi bi-heart-pulse-fill me-1"></i> 3. Hinga (Check-in)</td>
                                     <td class="text-secondary small">Automatically triggered the day following a "Hinto" event.</td>
-                                    <td><span class="badge bg-info text-dark px-3 py-2 w-100">CHECK-IN</span></td>
+                                    <td><span class="badge bg-info px-3 py-2 w-100">CHECK-IN</span></td>
                                     <td class="text-secondary small">Aftermath of severe weather. Academics take a back seat. Role temporarily shifts to supportive anchor for Psychological First Aid (PFA).</td>
                                 </tr>
                                 <tr>

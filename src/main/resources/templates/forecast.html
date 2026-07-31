@@ -83,6 +83,16 @@
             color: #fff;
             border-color: var(--header-bg);
         }
+
+        /* WCAG AA Contrast Compliance Overrides */
+        .badge.bg-success, .bg-success { background-color: #15803d !important; color: #ffffff !important; } 
+        .text-success { color: #15803d !important; }
+        
+        .badge.bg-warning, .bg-warning { background-color: #d97706 !important; color: #ffffff !important; } 
+        .text-warning { color: #d97706 !important; }
+        
+        .badge.bg-danger, .badge.bg-danger.bg-opacity-10, .bg-danger { background-color: #dc2626 !important; color: #ffffff !important; } 
+        .text-danger { color: #dc2626 !important; }
     </style>
 </head>
 <body>
@@ -168,9 +178,9 @@
 
                         <!-- Estimated Mode Badge -->
                         <div>
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] < 7.5}">HAYO</span>
-                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] >= 7.5 and hourlyPrecip[i] <= 15.0}">HINAY</span>
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 w-100 py-1" th:if="${hourlyPrecip[i] > 15.0}">HINTO</span>
+                            <span class="badge bg-success w-100 py-1" th:if="${hourlyPrecip[i] < 7.5}">HAYO</span>
+                            <span class="badge bg-warning w-100 py-1" th:if="${hourlyPrecip[i] >= 7.5 and hourlyPrecip[i] <= 15.0}">HINAY</span>
+                            <span class="badge bg-danger w-100 py-1" th:if="${hourlyPrecip[i] > 15.0}">HINTO</span>
                         </div>
                     </div>
                 </div>
