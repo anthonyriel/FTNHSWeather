@@ -740,6 +740,17 @@
     <script>
         // --- Setup initial Manila timezone filter for forecast selection (Strictly next 24 hours) ---
         document.addEventListener("DOMContentLoaded", async function() {
+            
+            // --- CRITICAL FIX: Register Service Worker immediately ---
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw-push.js');
+                    console.log('ServiceWorker registered successfully:', registration.scope);
+                } catch (err) {
+                    console.error('ServiceWorker registration failed:', err);
+                }
+            }
+
             const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
             const now = new Date(nowStr);
             const currentHourTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0).getTime();
@@ -870,6 +881,7 @@
                 const subscription = await registration.pushManager.getSubscription();
                 const localFlag = localStorage.getItem('pushEnabled') === 'true';
 
+                // Check BOTH that they have an active native sub AND have manually enabled it here
                 if (subscription && localFlag) {
                     setButtonState(true);
                 } else {
@@ -906,7 +918,7 @@
                     // Enable flow
                     const permission = await Notification.requestPermission();
                     if (permission !== 'granted') {
-                        alert('You denied the notification permission.');
+                        alert('You denied the notification permission. Please allow it in your browser settings to proceed.');
                         return;
                     }
 
@@ -917,6 +929,7 @@
 
                     const newSub = await registration.pushManager.subscribe(subscribeOptions);
 
+                    // Send the new subscription to backend
                     const response = await fetch('/api/push/subscribe', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -934,7 +947,17 @@
                     // Disable flow with a confirmation pop-up
                     const confirmed = confirm('Are you sure you want to disable phone notifications? You will no longer receive automated weather advisories.');
                     if (confirmed) {
+                        // Request the backend to delete this endpoint
+                        await fetch('/api/push/unsubscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ endpoint: subscription.endpoint })
+                        });
+
+                        // Unsubscribe natively in the browser
                         await subscription.unsubscribe();
+                        
+                        // Clear state
                         localStorage.removeItem('pushEnabled');
                         setButtonState(false);
                         alert('Phone notifications have been disabled.');

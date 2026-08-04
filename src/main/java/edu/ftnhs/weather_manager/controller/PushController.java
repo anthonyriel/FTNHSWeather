@@ -54,6 +54,20 @@ public class PushController {
         }
     }
 
+    // NEW ENDPOINT: Unsubscribe and delete from database
+    @PostMapping("/unsubscribe")
+    public ResponseEntity<?> unsubscribe(@RequestBody Map<String, String> payload) {
+        try {
+            String endpoint = payload.get("endpoint");
+            if (endpoint != null) {
+                subscriptionRepository.deleteByEndpoint(endpoint);
+            }
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/broadcast")
     public ResponseEntity<?> broadcastNotification(@RequestBody Map<String, String> payloadMap) {
         try {
