@@ -33,6 +33,7 @@ import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -103,6 +104,7 @@ public class DashboardController {
 
         ZoneId phZone = ZoneId.of("Asia/Manila");
         LocalDate today = LocalDate.now(phZone);
+        OffsetDateTime now = OffsetDateTime.now(phZone);
 
         WeatherLog latestLog = weatherLogRepository.findTopByOrderByTimestampDesc();
         Optional<LearningStatusLog> todayStatus = learningStatusLogRepository.findTopByTargetDateOrderByCreatedAtDesc(today);
@@ -115,6 +117,7 @@ public class DashboardController {
         String cloudCover = "0";
         String weatherCondition = "Clear";
         String lastUpdated = "Waiting for first cron job run...";
+        long secondsSinceLastUpdate = 600; // Default to full 10 mins
 
         int confidenceScore = 0;
         String riskLevel = "UNKNOWN";
@@ -150,6 +153,10 @@ public class DashboardController {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm a");
             OffsetDateTime phTime = latestLog.getTimestamp().atZoneSameInstant(phZone).toOffsetDateTime();
             lastUpdated = phTime.format(formatter);
+
+            // Calculate exact seconds elapsed for UI timer sync
+            Duration diff = Duration.between(latestLog.getTimestamp(), now);
+            secondsSinceLastUpdate = diff.getSeconds();
         }
 
         boolean hasActiveOverride = false;
@@ -185,6 +192,7 @@ public class DashboardController {
         model.addAttribute("temperature", temperature);
         model.addAttribute("windSpeed", windSpeed);
         model.addAttribute("lastUpdated", lastUpdated);
+        model.addAttribute("secondsSinceLastUpdate", secondsSinceLastUpdate);
         model.addAttribute("bannerClass", bannerClass);
         model.addAttribute("hasActiveOverride", hasActiveOverride);
 
@@ -210,6 +218,24 @@ public class DashboardController {
             .limit(10)
             .collect(Collectors.toList());
         model.addAttribute("notificationLogs", notificationLogs);
+
+        // Fetch forecast data for the Mode Projection feature
+        RestClient restClient = RestClient.create();
+        String url = "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&hourly=precipitation,wind_speed_10m&timezone=auto";
+        try {
+            OpenMeteoResponse forecastResponse = restClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .body(OpenMeteoResponse.class);
+            
+            if (forecastResponse != null && forecastResponse.hourly() != null) {
+                model.addAttribute("forecastTimes", forecastResponse.hourly().time());
+                model.addAttribute("forecastPrecip", forecastResponse.hourly().precipitation());
+                model.addAttribute("forecastWind", forecastResponse.hourly().windSpeed10m());
+            }
+        } catch (Exception e) {
+            model.addAttribute("forecastError", "Unable to fetch projection data.");
+        }
 
         return "dashboard"; 
     }

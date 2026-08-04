@@ -8,6 +8,7 @@ import edu.ftnhs.weather_manager.repository.WeatherLogRepository;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -17,9 +18,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.LocalDate;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class WeatherDecisionEngine {
@@ -60,25 +58,21 @@ public class WeatherDecisionEngine {
                     log.info("Last check was {} minutes ago (>= 10 mins). Executing weather check immediately...", elapsedMinutes);
                     fetchWeatherAndEvaluateStatus();
                 } else {
-                    long remainingMinutes = 10 - elapsedMinutes;
                     long remainingSeconds = (10 * 60) - duration.getSeconds();
-                    log.info("Last check was {} minutes ago. Scheduling next catch-up check in {} minutes (approx {} seconds).", 
-                            elapsedMinutes, remainingMinutes, remainingSeconds);
-
-                    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-                    scheduler.schedule(() -> {
-                        try {
-                            fetchWeatherAndEvaluateStatus();
-                        } catch (Exception e) {
-                            log.error("Failed to execute startup catch-up weather check: ", e);
-                        }
-                    }, Math.max(remainingSeconds, 0), TimeUnit.SECONDS);
-                    scheduler.shutdown();
+                    log.info("Last check was {} minutes ago. Next check expected in approx {} seconds.", 
+                            elapsedMinutes, remainingSeconds);
                 }
             }
         } catch (Exception e) {
             log.error("Error during startup weather synchronization check: ", e);
         }
+    }
+
+    // Ensures the fetch runs exactly every 10 minutes continuously
+    @Scheduled(fixedRate = 600000) 
+    public void scheduledWeatherCheck() {
+        log.info("Executing scheduled 10-minute weather check...");
+        fetchWeatherAndEvaluateStatus();
     }
 
     public void fetchWeatherAndEvaluateStatus() {

@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root {
@@ -56,6 +58,12 @@
         .timeline-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+        }
+        /* Chart container constraint */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
         }
         .app-header {
             background-color: var(--header-bg) !important;
@@ -149,7 +157,7 @@
         <div class="container pb-5">
             
             <div class="mb-4">
-                <h2 class="fw-bold text-dark"><i class="bi bi-calendar3 me-2 text-primary"></i>24-Hour Advance Forecast</h2>
+                <h2 class="fw-bold text-dark"><i class="bi bi-calendar3 me-2 text-primary"></i>Advanced Forecast</h2>
                 <p class="text-muted small mb-0">Hourly meteorological projections and simulated modal evaluations for Fermin Tayabas National High School.</p>
             </div>
 
@@ -158,12 +166,42 @@
                 Unable to load forecast data.
             </div>
 
+            <!-- Graphs / Charts Row -->
+            <div class="row mb-4 g-4" th:if="${hourlyTimes != null and !hourlyTimes.isEmpty()}">
+                <!-- Rainfall Chart -->
+                <div class="col-12 col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-rain me-2 text-primary"></i>10-Hour Rainfall Forecast (mm/hr)</h5>
+                            <div class="chart-container">
+                                <canvas id="forecastRainfallChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Temperature Chart -->
+                <div class="col-12 col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-thermometer-half me-2 text-warning"></i>10-Hour Temperature Forecast (°C)</h5>
+                            <div class="chart-container">
+                                <canvas id="forecastTemperatureChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Timeline Cards Grid (Horizontal Swipe on Mobile) -->
             <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" th:if="${hourlyTimes != null and !hourlyTimes.isEmpty()}">
                 <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history me-2 text-secondary"></i>Hourly Timeline (Swipe Horizontally)</h5>
                 
                 <div class="timeline-scroll" id="forecastTimeline">
-                    <div class="card timeline-card border-0 bg-light text-center p-3" th:each="i : ${#numbers.sequence(0, hourlyTimes.size() - 1)}" th:attr="data-time=${hourlyTimes[i]}">
+                    <!-- Embedded data attributes used by the Chart script -->
+                    <div class="card timeline-card border-0 bg-light text-center p-3" 
+                         th:each="i : ${#numbers.sequence(0, hourlyTimes.size() - 1)}" 
+                         th:attr="data-time=${hourlyTimes[i]}, data-temp=${hourlyTemps[i]}, data-precip=${hourlyPrecip[i]}">
+                        
                         <!-- Date Badge -->
                         <div class="badge bg-success bg-opacity-10 text-success mb-1 fw-bold py-1" style="font-size: 0.65rem;" th:text="${#strings.substring(hourlyTimes[i], 5, 10)}">05-26</div>
                         <div class="small fw-bold text-dark mb-2" th:text="${#strings.substring(hourlyTimes[i], 11, 16)}">00:00</div>
@@ -205,7 +243,7 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Script to filter forecast starting from the next hour based on Manila time -->
+    <!-- Script to render graphs and filter forecast starting from current hour -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
@@ -215,16 +253,125 @@
             const currentHourTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0).getTime();
             
             const cards = document.querySelectorAll('.timeline-card');
+            
+            // Arrays to hold the next 10 hours of data
+            let chartLabels = [];
+            let chartTempData = [];
+            let chartRainData = [];
+            let dataCount = 0;
+
             cards.forEach(card => {
                 const cardTimeStr = card.getAttribute('data-time');
                 if (cardTimeStr) {
-                    const cardTime = new Date(cardTimeStr).getTime();
-                    // Hide any past or current hour cards so it starts strictly at the next hour
-                    if (cardTime <= currentHourTime) {
+                    const cardTimeObj = new Date(cardTimeStr);
+                    const cardTime = cardTimeObj.getTime();
+                    
+                    // Hide any past hour cards so timeline starts strictly at the next hour
+                    if (cardTime < currentHourTime) {
                         card.style.display = 'none';
+                    } else {
+                        // Gather exact 10 hours of forecast data for the charts
+                        if (dataCount < 10) {
+                            // Format Label to MM-DD HH:00
+                            const month = ("0" + (cardTimeObj.getMonth() + 1)).slice(-2);
+                            const day = ("0" + cardTimeObj.getDate()).slice(-2);
+                            const hours = ("0" + cardTimeObj.getHours()).slice(-2);
+                            
+                            chartLabels.push(`${month}-${day} ${hours}:00`);
+                            chartTempData.push(parseFloat(card.getAttribute('data-temp')));
+                            chartRainData.push(parseFloat(card.getAttribute('data-precip')));
+                            
+                            dataCount++;
+                        }
                     }
                 }
             });
+
+            // Initialize Charts if data was gathered
+            if (chartLabels.length > 0) {
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                Chart.defaults.color = '#6c757d';
+
+                const maxRain = Math.max(...chartRainData, 0.5);
+                const dynamicRainMax = Math.max(maxRain * 1.2, 1.0);
+
+                const minTemp = Math.min(...chartTempData);
+                const maxTemp = Math.max(...chartTempData);
+                const dynamicTempMin = Math.floor(minTemp - 1);
+                const dynamicTempMax = Math.ceil(maxTemp + 1);
+
+                // Rainfall Bar Chart
+                const ctxRain = document.getElementById('forecastRainfallChart').getContext('2d');
+                new Chart(ctxRain, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Rainfall Forecast (mm/hr)',
+                            data: chartRainData,
+                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                            borderColor: 'rgb(13, 110, 253)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: { 
+                            x: {
+                                ticks: { maxTicksLimit: 10, maxRotation: 45 }
+                            },
+                            y: { 
+                                beginAtZero: true, 
+                                suggestedMax: dynamicRainMax 
+                            } 
+                        }
+                    }
+                });
+
+                // Temperature Line Chart
+                const ctxTemp = document.getElementById('forecastTemperatureChart').getContext('2d');
+                new Chart(ctxTemp, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Temperature Forecast (°C)',
+                            data: chartTempData,
+                            backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                            borderColor: 'rgb(25, 135, 84)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgb(25, 135, 84)',
+                            pointRadius: 3,
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: { 
+                            x: {
+                                ticks: { maxTicksLimit: 10, maxRotation: 45 }
+                            },
+                            y: { 
+                                beginAtZero: false, 
+                                suggestedMin: dynamicTempMin, 
+                                suggestedMax: dynamicTempMax 
+                            } 
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>

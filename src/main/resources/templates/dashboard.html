@@ -289,7 +289,7 @@
                                     <div class="d-flex align-items-center mb-1 opacity-90">
                                         <i class="bi bi-clock-history me-2"></i> <span>Last Evaluation:</span>
                                     </div>
-                                    <div class="opacity-75 text-break" th:text="${lastUpdated}">Jul 31, 2026 - 06:53 AM</div>
+                                    <div class="opacity-75 text-break" id="lastUpdatedText" th:text="${lastUpdated}">Jul 31, 2026 - 06:53 AM</div>
                                 </div>
                                 
                                 <hr class="border-light opacity-25 my-3">
@@ -297,6 +297,54 @@
                                 <div class="fw-bold text-warning d-flex align-items-center" style="font-size: 0.95rem;">
                                     <i class="bi bi-arrow-repeat me-2"></i> Next Auto-Update: <span id="countdownTimer" class="ms-1 weather-value">--</span>
                                 </div>
+                                <div id="secondsSinceLastUpdate" class="d-none" th:text="${secondsSinceLastUpdate}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mode Projection Feature -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${forecastTimes != null}">
+                <div class="card-body p-4 p-md-4">
+                    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center mb-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary fs-4 d-none d-sm-block">
+                            <i class="bi bi-binoculars-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1"><i class="bi bi-binoculars-fill d-sm-none text-primary me-2"></i>Learning Mode Projection</h5>
+                            <p class="text-muted small mb-0 lh-sm">Select an hour within the next 24 hours to see the projected 4H status.</p>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 align-items-center">
+                        <div class="col-12 col-md-4">
+                            <select id="forecastHourSelect" class="form-select form-select-lg shadow-sm border-secondary border-opacity-25" onchange="updateProjectionMode()">
+                                <option value="" disabled selected>Select an hour (Next 24 hrs)...</option>
+                                <th:block th:each="i : ${#numbers.sequence(0, forecastTimes.size() - 1)}">
+                                    <option th:value="${i}" 
+                                            th:data-time="${forecastTimes[i]}"
+                                            th:data-precip="${forecastPrecip[i]}" 
+                                            th:data-wind="${forecastWind[i]}" 
+                                            th:text="${#strings.substring(forecastTimes[i], 5, 10) + ' — ' + #strings.substring(forecastTimes[i], 11, 16)}">
+                                    </option>
+                                </th:block>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 col-md-8">
+                            <div id="projectionResultContainer" class="d-none bg-light p-3 rounded-3 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+                                <div>
+                                    <div class="small fw-bold text-muted text-uppercase mb-1">Projected Status</div>
+                                    <h4 id="projectedModeLabel" class="fw-bolder mb-0">HAYO</h4>
+                                </div>
+                                <div class="text-start text-sm-end small text-secondary">
+                                    <div class="mb-1"><i class="bi bi-cloud-rain me-1"></i> <span id="projectedPrecip" class="weather-value fw-bold"></span> mm/hr</div>
+                                    <div><i class="bi bi-wind me-1"></i> <span id="projectedWind" class="weather-value fw-bold"></span> km/h</div>
+                                </div>
+                            </div>
+                            <div id="projectionEmptyState" class="text-muted small p-2 fst-italic">
+                                <i class="bi bi-arrow-left me-1 d-none d-md-inline"></i><i class="bi bi-arrow-up me-1 d-md-none"></i> Select a time to view projection.
                             </div>
                         </div>
                     </div>
@@ -507,7 +555,7 @@
                 </div>
             </div>
 
-            <!-- Admin Override Controls (Updated with 2x2 Mobile / 1-Line Desktop Grid) -->
+            <!-- Admin Override Controls -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" th:if="${isAdminLoggedIn}">
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>4H Manual Override</h5>
@@ -555,8 +603,8 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light small text-uppercase">
                                 <tr>
-                                    <th class="ps-3 py-3">Advisory Title</th>
-                                    <th class="pe-3 py-3 text-end text-md-start">Timestamp (PST)</th>
+                                    <th class="ps-3 py-3 w-75">Advisory Title</th>
+                                    <th class="pe-3 py-3 w-25 text-end text-md-start">Timestamp (PST)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -568,7 +616,7 @@
                                         <div class="fw-bold text-dark text-break" th:text="${log.title}">FTNHS Weather Advisory</div>
                                         <div class="small text-secondary broadcast-body-text text-break lh-sm mt-1" th:text="${log.body}">Alert body text...</div>
                                     </td>
-                                    <td class="pe-3 py-3 small text-muted weather-value text-end text-md-start text-nowrap align-top pt-3 pt-md-auto" th:text="${log.sentAt != null ? #temporals.format(log.sentAt.atZoneSameInstant(T(java.time.ZoneId).of('Asia/Manila')), 'MMM dd, yyyy - hh:mm a') : 'N/A'}">Timestamp</td>
+                                    <td class="pe-3 py-3 small text-muted weather-value text-end text-md-start align-top pt-3 pt-md-auto" th:text="${log.sentAt != null ? #temporals.format(log.sentAt.atZoneSameInstant(T(java.time.ZoneId).of('Asia/Manila')), 'MMM dd, yyyy - hh:mm a') : 'N/A'}">Timestamp</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -674,12 +722,15 @@
         </div>
     </div>
 
-    <footer class="bg-white border-top py-4 mt-auto text-muted small">
+    <footer class="bg-white border-top py-3 mt-auto text-muted small">
         <div class="container text-center">
-            <p class="mb-1 fw-bold text-dark" style="font-size: 0.85rem;">FTNHS Weather Hub</p>
-            <p class="mb-2" style="font-size: 0.8rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
-            <div class="text-secondary opacity-75" style="font-size: 0.75rem;">
-                Powered by PUSHER
+            <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">FTNHS Weather Hub</p>
+            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
+            <div class="d-flex justify-content-center flex-row flex-nowrap gap-2 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.68rem;">
+                <span class="text-nowrap"><i class="bi bi-server me-1"></i>Spring Boot</span>
+                <span class="text-nowrap"><i class="bi bi-cloud-sun me-1"></i>Open-Meteo</span>
+                <span class="text-nowrap"><i class="bi bi-shield-check me-1"></i>Supabase</span>
+                <span class="text-nowrap"><i class="bi bi-hdd-network me-1"></i>Render</span>
             </div>
         </div>
     </footer>
@@ -687,7 +738,30 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Real-time Clock Handler
+        // --- Setup initial Manila timezone filter for forecast selection (Strictly next 24 hours) ---
+        document.addEventListener("DOMContentLoaded", function() {
+            const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
+            const now = new Date(nowStr);
+            const currentHourTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0).getTime();
+            const maxLimitTime = currentHourTime + (24 * 60 * 60 * 1000); // Exactly 24 hours from current hour
+
+            const options = document.querySelectorAll('#forecastHourSelect option');
+            options.forEach(option => {
+                if(option.value === "") return;
+                
+                const timeStr = option.getAttribute('data-time');
+                if(timeStr) {
+                    const cardTime = new Date(timeStr).getTime();
+                    // Hide past hours AND hours beyond 24 hours from current time
+                    if (cardTime <= currentHourTime || cardTime > maxLimitTime) {
+                        option.style.display = 'none';
+                        option.disabled = true;
+                    }
+                }
+            });
+        });
+
+        // --- Real-time Clock Handler ---
         function updateClock() {
             const now = new Date();
             document.getElementById('liveClock').textContent = now.toLocaleTimeString('en-US', {
@@ -697,19 +771,26 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 10-Minute Countdown Timer for Data Refresh
-        let secondsLeft = 600; // 10 minutes default
+        // --- Dynamic Sync Countdown Timer ---
+        let secondsLeft = 600; 
         
-        function getNextUpdateTime() {
+        function initializeCountdown() {
             try {
-                const lastUpdatedText = document.querySelector('.text-break').textContent;
-                if(!lastUpdatedText.includes("Loading")) {
+                const elapsedDiv = document.getElementById('secondsSinceLastUpdate');
+                if(elapsedDiv && elapsedDiv.textContent) {
+                    const elapsed = parseInt(elapsedDiv.textContent);
+                    if(!isNaN(elapsed) && elapsed < 600) {
+                        secondsLeft = 600 - elapsed;
+                    } else if (elapsed >= 600) {
+                        secondsLeft = 0; 
+                    }
                 }
             } catch(e) {}
-            return 600; 
         }
 
         function updateCountdown() {
+            if (secondsLeft < 0) secondsLeft = 0;
+            
             const mins = Math.floor(secondsLeft / 60);
             const secs = secondsLeft % 60;
             document.getElementById('countdownTimer').textContent = 
@@ -717,11 +798,46 @@
             if (secondsLeft > 0) secondsLeft--;
         }
         
+        initializeCountdown();
         setInterval(updateCountdown, 1000);
         updateCountdown();
 
+        // --- Projection Mode Logic ---
+        function updateProjectionMode() {
+            const select = document.getElementById('forecastHourSelect');
+            const selectedOption = select.options[select.selectedIndex];
+            
+            if (selectedOption.value === "") return;
+
+            const rain = parseFloat(selectedOption.getAttribute('data-precip')) || 0.0;
+            const wind = parseFloat(selectedOption.getAttribute('data-wind')) || 0.0;
+
+            document.getElementById('projectedPrecip').textContent = rain.toFixed(1);
+            document.getElementById('projectedWind').textContent = wind.toFixed(1);
+
+            let modeLabel = "HAYO (In-Person)";
+            let colorClass = "text-success";
+
+            if (rain > 15.0 || wind > 60.0) {
+                modeLabel = "HINTO (Suspended)";
+                colorClass = "text-danger";
+            } else if (rain >= 7.5 || wind >= 40.0) {
+                modeLabel = "HINAY (Modular)";
+                colorClass = "text-warning";
+            }
+
+            const modeLabelEl = document.getElementById('projectedModeLabel');
+            modeLabelEl.textContent = modeLabel;
+            
+            modeLabelEl.classList.remove('text-success', 'text-warning', 'text-danger');
+            modeLabelEl.classList.add(colorClass);
+
+            document.getElementById('projectionEmptyState').classList.add('d-none');
+            document.getElementById('projectionResultContainer').classList.remove('d-none');
+        }
+
         // --- Push Notification Registration Function ---
-        const PUBLIC_VAPID_KEY = 'YOUR_PUBLIC_VAPID_KEY_HERE';
+        const PUBLIC_VAPID_KEY = 'BI7GOY8KA-UYpwpbWdaAcitioMZmgnUS59Qv-YfuyusQfGf1TCs3XvPPelmMbgF0eGsVWUEAvK62rp---IBg0Wg=';
 
         function urlBase64ToUint8Array(base64String) {
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
