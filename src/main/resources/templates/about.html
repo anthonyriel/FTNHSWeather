@@ -71,7 +71,7 @@
             border-radius: 12px;
         }
 
-        /* Task 1.2: WCAG AA Contrast Compliance & Touch Targets */
+        /* WCAG AA Contrast Compliance & Touch Targets */
         .badge.bg-success, .bg-success { background-color: #15803d !important; color: #ffffff !important; } 
         .text-success { color: #15803d !important; }
         
@@ -90,12 +90,15 @@
 <body>
 
     <div class="content-wrap">
-        <!-- Navigation Bar with Medium Green Theme -->
-        <nav class="navbar navbar-dark app-header mb-4 shadow-sm">
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-dark app-header mb-4 py-3">
             <div class="container">
-                <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2 text-warning"></i>FTNHS Weather Hub</a>
-                <button class="btn btn-outline-light btn-sm fw-medium px-3 btn-touch-target" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
-                    <i class="bi bi-list fs-5 me-1 align-middle"></i> Menu
+                <a class="navbar-brand fw-bold text-truncate fs-4 d-flex align-items-center" href="/">
+                    <img src="/images/weather/clear_3d.png" alt="Logo" style="width: 32px; height: 32px;" class="me-2 filter-drop">
+                    <span>FTNHS Weather Hub</span>
+                </a>
+                <button class="btn btn-outline-light btn-sm fw-medium px-3 py-2 rounded-3 shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
+                    <i class="bi bi-list fs-5 me-1 align-middle"></i> <span class="d-none d-sm-inline">Menu</span>
                 </button>
             </div>
         </nav>
