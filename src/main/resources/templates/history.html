@@ -19,14 +19,21 @@
         :root {
             --primary-font: 'Inter', sans-serif;
             --heading-font: 'Poppins', sans-serif;
-            --header-bg: #198754; /* Balanced Medium Green */
-            --drawer-bg: #f4f8f5; /* Clean Soft Pale Green */
+            --soft-bg: #e6ecf5;
+            --soft-surface-flat: linear-gradient(145deg, #ffffff, #e2e8f0);
+            --soft-shadow-outset: 10px 10px 22px #c3cbda, -10px -10px 22px #ffffff;
+            --soft-shadow-outset-sm: 6px 6px 14px #c8d0df, -6px -6px 14px #ffffff;
+            --soft-shadow-inset: inset 4px 4px 9px #c3cbda, inset -4px -4px 9px #ffffff;
+            --soft-border: 1px solid rgba(255, 255, 255, 0.75);
+            --header-bg: linear-gradient(135deg, #15803d 0%, #166534 100%);
+            --drawer-bg: #e8ecf3;
             --drawer-text: #1f3824;
-            --hover-bg: #e2ede5; /* Contrasting hover state */
+            --hover-bg: #d5e0d8;
         }
         body {
             font-family: var(--primary-font);
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, #e8ecf3 0%, #f4f7fc 50%, #e2e8f0 100%);
+            color: #2d3748;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -37,6 +44,32 @@
         h1, h2, h3, h4, h5, h6, .navbar-brand {
             font-family: var(--heading-font);
         }
+
+        .soft-card {
+            background: var(--soft-surface-flat);
+            border-radius: 24px;
+            box-shadow: var(--soft-shadow-outset);
+            border: var(--soft-border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .soft-card:hover {
+            box-shadow: 14px 14px 28px #bac3d3, -14px -14px 28px #ffffff;
+            transform: translateY(-2px);
+        }
+        .soft-inset {
+            background: #ebf0f7;
+            border-radius: 18px;
+            box-shadow: var(--soft-shadow-inset);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .soft-btn {
+            background: var(--soft-surface-flat);
+            border-radius: 14px;
+            box-shadow: var(--soft-shadow-outset-sm);
+            border: var(--soft-border);
+            transition: all 0.2s ease;
+        }
+
         .chart-container {
             position: relative;
             height: 300px;
@@ -46,16 +79,17 @@
             font-size: 0.9rem;
         }
         .table-custom thead th {
-            background-color: #f8f9fa;
-            color: #6c757d;
+            background-color: transparent;
+            color: #64748b;
             font-weight: 600;
             text-transform: uppercase;
             font-size: 0.8rem;
             letter-spacing: 0.5px;
-            border-bottom: 2px solid #dee2e6;
+            border-bottom: 2px solid #cbd5e1;
         }
         .app-header {
-            background-color: var(--header-bg) !important;
+            background: var(--header-bg) !important;
+            box-shadow: 0 8px 20px rgba(21, 128, 61, 0.25);
         }
         .custom-drawer {
             background-color: var(--drawer-bg) !important;
@@ -64,24 +98,12 @@
         .custom-drawer .nav-link {
             color: var(--drawer-text);
             font-weight: 500;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
         .custom-drawer .nav-link:hover {
             background-color: var(--hover-bg);
-            color: var(--header-bg);
-        }
-        .btn-outline-theme {
-            color: var(--header-bg);
-            border: 2px solid var(--header-bg);
-            transition: all 0.2s ease;
-        }
-        .btn-outline-theme:hover {
-            background-color: var(--header-bg);
-            color: #fff;
-            border-color: var(--header-bg);
+            color: #15803d;
         }
 
-        /* Perfectly Aligned Stacked Mobile Card Layout */
         @media (max-width: 640px) {
             .table-mobile-cards table, 
             .table-mobile-cards thead, 
@@ -98,17 +120,16 @@
                 left: -9999px; 
             }
             .table-mobile-cards tr { 
-                border: 1px solid rgba(0,0,0,0.08); 
-                border-radius: 12px; 
+                border-radius: 16px; 
                 margin-bottom: 1rem; 
                 padding: 0 1.25rem 1rem 1.25rem; 
-                background-color: #ffffff; 
-                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.04); 
+                background: var(--soft-surface-flat); 
+                box-shadow: var(--soft-shadow-outset-sm); 
                 overflow: hidden;
             }
             .table-mobile-cards td { 
                 border: none; 
-                border-bottom: 1px solid #f1f3f5; 
+                border-bottom: 1px solid rgba(203, 213, 225, 0.5); 
                 position: relative; 
                 padding: 0.75rem 0; 
                 display: flex; 
@@ -120,32 +141,30 @@
                 border-bottom: 0; 
                 padding-bottom: 0; 
             }
-            /* Timestamp Banner (Left-Aligned Top Header) */
             .table-mobile-cards td[data-label="Timestamp"] { 
                 flex-direction: column;
                 align-items: flex-start;
                 text-align: left;
-                background-color: #f8f9fa;
+                background: #ebf0f7;
                 margin: 0 -1.25rem 0.5rem -1.25rem;
                 padding: 0.75rem 1.25rem;
-                border-bottom: 1px solid #e9ecef;
+                border-bottom: 1px solid rgba(203, 213, 225, 0.6);
                 width: calc(100% + 2.50rem);
             }
             .table-mobile-cards td[data-label="Timestamp"]::before {
                 content: "TIMESTAMP";
                 font-weight: 700;
                 font-size: 0.7rem;
-                color: #6c757d;
+                color: #64748b;
                 letter-spacing: 0.5px;
                 margin-bottom: 0.15rem;
             }
-            /* Standard Data Rows */
             .table-mobile-cards td:not([data-label="Timestamp"])::before { 
                 content: attr(data-label); 
                 font-weight: 600; 
                 text-transform: uppercase; 
                 font-size: 0.75rem; 
-                color: #6c757d; 
+                color: #64748b; 
                 text-align: left; 
                 padding-right: 1rem; 
                 letter-spacing: 0.5px;
@@ -156,17 +175,20 @@
 <body>
 
     <div class="content-wrap">
-        <!-- Navigation Bar with Medium Green Theme -->
-        <nav class="navbar navbar-dark app-header mb-4 shadow-sm">
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-dark app-header mb-4 py-3">
             <div class="container">
-                <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2 text-warning"></i>FTNHS Weather Hub</a>
-                <button class="btn btn-outline-light btn-sm fw-medium px-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
+                <a class="navbar-brand fw-bold fs-4 d-flex align-items-center" href="/">
+                    <img src="/images/weather/clear_3d.png" alt="Logo" style="width: 32px; height: 32px;" class="me-2">
+                    <span>FTNHS Weather Hub</span>
+                </a>
+                <button class="btn btn-outline-light btn-sm fw-medium px-3 py-2 rounded-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
                     <i class="bi bi-list fs-5 me-1 align-middle"></i> Menu
                 </button>
             </div>
         </nav>
 
-        <!-- Offcanvas Sidebar Drawer (Soft Pale Green with High Contrast Hover) -->
+        <!-- Offcanvas Sidebar Drawer -->
         <div class="offcanvas offcanvas-start custom-drawer" tabindex="-1" id="sidebarDrawer" aria-labelledby="sidebarDrawerLabel">
             <div class="offcanvas-header border-bottom border-success border-opacity-25 px-4 py-3">
                 <h5 class="offcanvas-title fw-bold" id="sidebarDrawerLabel"><i class="bi bi-cloud-sun me-2 text-success"></i>FTNHS Weather Hub</h5>
@@ -176,11 +198,10 @@
                 <ul class="navbar-nav gap-2">
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/forecast"><i class="bi bi-calendar-week me-2 text-warning"></i>Forecast</a></li>
-                    <li class="nav-item"><a class="nav-link active rounded px-3 py-2 bg-success text-white fw-medium" href="/history"><i class="bi bi-clock-history me-2"></i>History</a></li>
+                    <li class="nav-item"><a class="nav-link active rounded px-3 py-2 bg-success text-white fw-medium shadow-sm" href="/history"><i class="bi bi-clock-history me-2"></i>History</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/analytics"><i class="bi bi-graph-up-arrow me-2 text-info"></i>Analytics</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/about"><i class="bi bi-info-circle me-2 text-secondary"></i>About System</a></li>
                     
-                    <!-- Admin-Only Navigation Links -->
                     <th:block th:if="${isAdminLoggedIn}">
                         <li class="nav-item mt-3 pt-3 border-top border-success border-opacity-25">
                             <span class="text-muted small text-uppercase px-3 fw-bold tracking-wider">Admin Controls</span>
@@ -192,12 +213,12 @@
                 
                 <div class="pt-3 border-top border-success border-opacity-25">
                     <div th:if="${!isAdminLoggedIn}">
-                        <a href="/login" class="btn btn-outline-theme w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
+                        <a href="/login" class="btn soft-btn text-success w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
                     </div>
                     <div th:if="${isAdminLoggedIn}">
                         <div class="small text-muted mb-2"><i class="bi bi-person-circle text-success me-1"></i> Logged in as <strong class="text-dark" th:text="${adminName}">Admin</strong></div>
                         <form action="/logout" method="post">
-                            <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                            <button type="submit" class="btn soft-btn text-danger w-100 fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
                         </form>
                     </div>
                 </div>
@@ -211,7 +232,7 @@
                     <h2 class="fw-bold text-dark mb-1"><i class="bi bi-clock-history me-2 text-primary"></i>Weather Log History</h2>
                     <p class="text-muted small mb-0">Historical weather data and system logs recorded for Fermin Tayabas National High School.</p>
                 </div>
-                <a href="/history/export" class="btn btn-outline-success fw-medium btn-sm">
+                <a href="/history/export" class="btn soft-btn text-success fw-bold px-3 py-2 btn-sm">
                     <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export Raw CSV Data
                 </a>
             </div>
@@ -220,10 +241,10 @@
             <div class="row mb-4 g-4" th:if="${weatherLogs != null and !weatherLogs.isEmpty()}">
                 <!-- Rainfall Chart -->
                 <div class="col-12 col-lg-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                    <div class="card border-0 soft-card h-100">
                         <div class="card-body p-4">
                             <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-rain me-2 text-primary"></i>Rainfall Trends (mm/hr)</h5>
-                            <div class="chart-container">
+                            <div class="chart-container soft-inset p-2">
                                 <canvas id="rainfallChart"></canvas>
                             </div>
                         </div>
@@ -231,10 +252,10 @@
                 </div>
                 <!-- Temperature Chart -->
                 <div class="col-12 col-lg-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                    <div class="card border-0 soft-card h-100">
                         <div class="card-body p-4">
                             <h5 class="fw-bold text-dark mb-3"><i class="bi bi-thermometer-half me-2 text-warning"></i>Temperature Trends (°C)</h5>
-                            <div class="chart-container">
+                            <div class="chart-container soft-inset p-2">
                                 <canvas id="temperatureChart"></canvas>
                             </div>
                         </div>
@@ -242,7 +263,6 @@
                 </div>
             </div>
 
-            <!-- Data Table (Hidden DOM element holding data securely for JavaScript parsing) -->
             <div id="weatherDataStore" class="d-none">
                 <div th:each="log : ${weatherLogs}" 
                      class="log-entry"
@@ -252,14 +272,14 @@
                 </div>
             </div>
 
-            <!-- Data Table View (Mobile Stacked Cards Enabled) -->
-            <div class="card border-0 shadow-sm rounded-4 bg-white">
-                <div class="card-body p-0">
-                    <div class="table-responsive table-mobile-cards p-2 p-md-0">
-                        <table class="table table-hover table-custom mb-0 align-middle">
+            <!-- Data Table View -->
+            <div class="card border-0 soft-card">
+                <div class="card-body p-3 p-md-4">
+                    <div class="table-responsive table-mobile-cards soft-inset p-2">
+                        <table class="table table-hover table-custom mb-0 align-middle bg-transparent">
                             <thead>
                                 <tr>
-                                    <th class="ps-4 py-3">Timestamp</th>
+                                    <th class="ps-3 py-3">Timestamp</th>
                                     <th class="py-3">Condition</th>
                                     <th class="py-3">Temperature</th>
                                     <th class="py-3">Rainfall</th>
@@ -271,7 +291,7 @@
                                     <td colspan="5" class="text-center py-4 text-muted">No historical data available yet.</td>
                                 </tr>
                                 <tr th:each="log : ${weatherLogs}">
-                                    <td data-label="Timestamp" class="ps-md-4 fw-medium text-dark" th:text="${#temporals.format(log.timestamp, 'MMM dd, yyyy - hh:mm a')}"></td>
+                                    <td data-label="Timestamp" class="ps-md-3 fw-medium text-dark" th:text="${#temporals.format(log.timestamp, 'MMM dd, yyyy - hh:mm a')}"></td>
                                     <td data-label="Condition">
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" th:text="${log.weatherCondition}">Clear</span>
                                     </td>
@@ -289,11 +309,11 @@
         </div>
     </div>
 
-    <footer class="bg-white border-top py-3 mt-auto text-muted small">
+    <footer class="bg-white border-top py-4 mt-auto text-muted small">
         <div class="container text-center">
-            <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">FTNHS Weather Hub</p>
-            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
-            <div class="d-flex justify-content-center flex-row flex-nowrap gap-2 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.68rem;">
+            <p class="mb-1 fw-bold text-dark" style="font-size: 0.85rem;">FTNHS Weather Hub</p>
+            <p class="mb-2" style="font-size: 0.78rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
+            <div class="d-flex justify-content-center flex-row flex-nowrap gap-3 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.72rem;">
                 <span class="text-nowrap"><i class="bi bi-server me-1"></i>Spring Boot</span>
                 <span class="text-nowrap"><i class="bi bi-cloud-sun me-1"></i>Open-Meteo</span>
                 <span class="text-nowrap"><i class="bi bi-shield-check me-1"></i>Supabase</span>
@@ -305,7 +325,6 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Clean JavaScript with Dynamic Y-Axis Scaling & Chart Optimizations -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const entries = document.querySelectorAll("#weatherDataStore .log-entry");
@@ -321,7 +340,7 @@
 
             if (labels.length > 0) {
                 Chart.defaults.font.family = "'Inter', sans-serif";
-                Chart.defaults.color = '#6c757d';
+                Chart.defaults.color = '#4a5568';
 
                 const maxRain = Math.max(...rainData, 0.5);
                 const dynamicRainMax = Math.max(maxRain * 1.2, 1.0);
@@ -331,7 +350,6 @@
                 const dynamicTempMin = Math.floor(minTemp - 1);
                 const dynamicTempMax = Math.ceil(maxTemp + 1);
 
-                // Rainfall Bar Chart
                 const ctxRain = document.getElementById('rainfallChart').getContext('2d');
                 new Chart(ctxRain, {
                     type: 'bar',
@@ -340,10 +358,10 @@
                         datasets: [{
                             label: 'Rainfall (mm/hr)',
                             data: rainData,
-                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
-                            borderColor: 'rgb(13, 110, 253)',
+                            backgroundColor: 'rgba(2, 132, 199, 0.75)',
+                            borderColor: '#0284c7',
                             borderWidth: 1,
-                            borderRadius: 4
+                            borderRadius: 6
                         }]
                     },
                     options: {
@@ -354,18 +372,12 @@
                             tooltip: { mode: 'index', intersect: false }
                         },
                         scales: { 
-                            x: {
-                                ticks: { maxTicksLimit: 6, maxRotation: 0 }
-                            },
-                            y: { 
-                                beginAtZero: true, 
-                                suggestedMax: dynamicRainMax 
-                            } 
+                            x: { ticks: { maxTicksLimit: 6, maxRotation: 0 } },
+                            y: { beginAtZero: true, suggestedMax: dynamicRainMax } 
                         }
                     }
                 });
 
-                // Temperature Line Chart
                 const ctxTemp = document.getElementById('temperatureChart').getContext('2d');
                 new Chart(ctxTemp, {
                     type: 'line',
@@ -374,13 +386,13 @@
                         datasets: [{
                             label: 'Temperature (°C)',
                             data: tempData,
-                            backgroundColor: 'rgba(25, 135, 84, 0.2)',
-                            borderColor: 'rgb(25, 135, 84)',
+                            backgroundColor: 'rgba(21, 128, 61, 0.2)',
+                            borderColor: '#15803d',
                             borderWidth: 2,
-                            pointBackgroundColor: 'rgb(25, 135, 84)',
-                            pointRadius: 3,
+                            pointBackgroundColor: '#15803d',
+                            pointRadius: 4,
                             fill: true,
-                            tension: 0.3
+                            tension: 0.35
                         }]
                     },
                     options: {
@@ -391,14 +403,8 @@
                             tooltip: { mode: 'index', intersect: false }
                         },
                         scales: { 
-                            x: {
-                                ticks: { maxTicksLimit: 6, maxRotation: 0 }
-                            },
-                            y: { 
-                                beginAtZero: false, 
-                                suggestedMin: dynamicTempMin, 
-                                suggestedMax: dynamicTempMax 
-                            } 
+                            x: { ticks: { maxTicksLimit: 6, maxRotation: 0 } },
+                            y: { beginAtZero: false, suggestedMin: dynamicTempMin, suggestedMax: dynamicTempMax } 
                         }
                     }
                 });

@@ -142,14 +142,28 @@ public class DashboardController {
             }
         }
 
+        int wmoCode = 0;
+        
         if (latestLog != null) {
             precipitation = String.valueOf(latestLog.getPrecipitationMm());
             temperature = String.valueOf(latestLog.getTemperature() != null ? latestLog.getTemperature() : 0.0);
             windSpeed = String.valueOf(latestLog.getWindSpeed() != null ? latestLog.getWindSpeed() : 0.0);
             humidity = String.valueOf(latestLog.getHumidity() != null ? latestLog.getHumidity() : 0.0);
             cloudCover = String.valueOf(latestLog.getCloudCover() != null ? latestLog.getCloudCover() : 0);
+            
             weatherCondition = latestLog.getWeatherCondition() != null ? latestLog.getWeatherCondition() : "Unknown";
             
+            String condLower = weatherCondition.toLowerCase();
+            if (condLower.contains("clear")) wmoCode = 0;
+            else if (condLower.contains("partly")) wmoCode = 2;
+            else if (condLower.contains("cloud")) wmoCode = 3;
+            else if (condLower.contains("fog")) wmoCode = 45;
+            else if (condLower.contains("drizzle")) wmoCode = 51;
+            else if (condLower.contains("heavy rain")) wmoCode = 65;
+            else if (condLower.contains("rain") || condLower.contains("shower")) wmoCode = 61;
+            else if (condLower.contains("snow")) wmoCode = 71;
+            else if (condLower.contains("thunder")) wmoCode = 95;
+
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm a");
             OffsetDateTime phTime = latestLog.getTimestamp().atZoneSameInstant(phZone).toOffsetDateTime();
             lastUpdated = phTime.format(formatter);
@@ -188,6 +202,7 @@ public class DashboardController {
         };
 
         model.addAttribute("learningMode", currentMode);
+        model.addAttribute("wmoCode", wmoCode);
         model.addAttribute("precipitation", precipitation);
         model.addAttribute("temperature", temperature);
         model.addAttribute("windSpeed", windSpeed);

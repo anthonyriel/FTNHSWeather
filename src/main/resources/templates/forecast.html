@@ -20,14 +20,21 @@
             --primary-font: 'Inter', sans-serif;
             --heading-font: 'Poppins', sans-serif;
             --mono-font: 'Roboto Mono', monospace;
-            --header-bg: #198754; /* Balanced Medium Green */
-            --drawer-bg: #f4f8f5; /* Clean Soft Pale Green */
+            --soft-bg: #e6ecf5;
+            --soft-surface-flat: linear-gradient(145deg, #ffffff, #e2e8f0);
+            --soft-shadow-outset: 10px 10px 22px #c3cbda, -10px -10px 22px #ffffff;
+            --soft-shadow-outset-sm: 6px 6px 14px #c8d0df, -6px -6px 14px #ffffff;
+            --soft-shadow-inset: inset 4px 4px 9px #c3cbda, inset -4px -4px 9px #ffffff;
+            --soft-border: 1px solid rgba(255, 255, 255, 0.75);
+            --header-bg: linear-gradient(135deg, #15803d 0%, #166534 100%);
+            --drawer-bg: #e8ecf3;
             --drawer-text: #1f3824;
-            --hover-bg: #e2ede5; /* Contrasting hover state */
+            --hover-bg: #d5e0d8;
         }
         body {
             font-family: var(--primary-font);
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, #e8ecf3 0%, #f4f7fc 50%, #e2e8f0 100%);
+            color: #2d3748;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -41,7 +48,44 @@
         .metric-value {
             font-family: var(--mono-font);
         }
-        /* Horizontal scrollable timeline container */
+
+        /* --- Soft UI Design Tokens --- */
+        .soft-card {
+            background: var(--soft-surface-flat);
+            border-radius: 24px;
+            box-shadow: var(--soft-shadow-outset);
+            border: var(--soft-border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .soft-card:hover {
+            box-shadow: 14px 14px 28px #bac3d3, -14px -14px 28px #ffffff;
+            transform: translateY(-2px);
+        }
+        .soft-inset {
+            background: #ebf0f7;
+            border-radius: 18px;
+            box-shadow: var(--soft-shadow-inset);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .soft-btn {
+            background: var(--soft-surface-flat);
+            border-radius: 14px;
+            box-shadow: var(--soft-shadow-outset-sm);
+            border: var(--soft-border);
+            transition: all 0.2s ease;
+        }
+
+        .weather-3d-icon-sm {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+            transition: transform 0.3s ease;
+        }
+        .weather-3d-icon-sm:hover {
+            transform: scale(1.15) rotate(4deg);
+        }
+
         .timeline-scroll {
             display: flex;
             overflow-x: auto;
@@ -50,23 +94,27 @@
             scroll-behavior: smooth;
         }
         .timeline-card {
-            min-width: 140px;
+            min-width: 145px;
             flex: 0 0 auto;
-            border-radius: 16px;
+            border-radius: 20px;
+            background: var(--soft-surface-flat) !important;
+            box-shadow: var(--soft-shadow-outset-sm);
+            border: var(--soft-border);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .timeline-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
+            transform: translateY(-4px);
+            box-shadow: 8px 8px 18px #bac3d3, -8px -8px 18px #ffffff;
         }
-        /* Chart container constraint */
+        
         .chart-container {
             position: relative;
             height: 300px;
             width: 100%;
         }
         .app-header {
-            background-color: var(--header-bg) !important;
+            background: var(--header-bg) !important;
+            box-shadow: 0 8px 20px rgba(21, 128, 61, 0.25);
         }
         .custom-drawer {
             background-color: var(--drawer-bg) !important;
@@ -75,48 +123,38 @@
         .custom-drawer .nav-link {
             color: var(--drawer-text);
             font-weight: 500;
-            transition: background-color 0.2s ease, color 0.2s ease;
         }
         .custom-drawer .nav-link:hover {
             background-color: var(--hover-bg);
-            color: var(--header-bg);
-        }
-        .btn-outline-theme {
-            color: var(--header-bg);
-            border: 2px solid var(--header-bg);
-            transition: all 0.2s ease;
-        }
-        .btn-outline-theme:hover {
-            background-color: var(--header-bg);
-            color: #fff;
-            border-color: var(--header-bg);
+            color: #15803d;
         }
 
-        /* WCAG AA Contrast Compliance Overrides */
+        /* WCAG Overrides */
         .badge.bg-success, .bg-success { background-color: #15803d !important; color: #ffffff !important; } 
         .text-success { color: #15803d !important; }
-        
         .badge.bg-warning, .bg-warning { background-color: #d97706 !important; color: #ffffff !important; } 
         .text-warning { color: #d97706 !important; }
-        
-        .badge.bg-danger, .badge.bg-danger.bg-opacity-10, .bg-danger { background-color: #dc2626 !important; color: #ffffff !important; } 
+        .badge.bg-danger, .bg-danger { background-color: #dc2626 !important; color: #ffffff !important; } 
         .text-danger { color: #dc2626 !important; }
     </style>
 </head>
 <body>
 
     <div class="content-wrap">
-        <!-- Navigation Bar with Medium Green Theme -->
-        <nav class="navbar navbar-dark app-header mb-4 shadow-sm">
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-dark app-header mb-4 py-3">
             <div class="container">
-                <a class="navbar-brand fw-bold" href="/"><i class="bi bi-cloud-sun me-2 text-warning"></i>FTNHS Weather Hub</a>
-                <button class="btn btn-outline-light btn-sm fw-medium px-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
+                <a class="navbar-brand fw-bold fs-4 d-flex align-items-center" href="/">
+                    <img src="/images/weather/clear_3d.png" alt="Logo" style="width: 32px; height: 32px;" class="me-2">
+                    <span>FTNHS Weather Hub</span>
+                </a>
+                <button class="btn btn-outline-light btn-sm fw-medium px-3 py-2 rounded-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarDrawer" aria-controls="sidebarDrawer">
                     <i class="bi bi-list fs-5 me-1 align-middle"></i> Menu
                 </button>
             </div>
         </nav>
 
-        <!-- Offcanvas Sidebar Drawer (Soft Pale Green with High Contrast Hover) -->
+        <!-- Offcanvas Sidebar Drawer -->
         <div class="offcanvas offcanvas-start custom-drawer" tabindex="-1" id="sidebarDrawer" aria-labelledby="sidebarDrawerLabel">
             <div class="offcanvas-header border-bottom border-success border-opacity-25 px-4 py-3">
                 <h5 class="offcanvas-title fw-bold" id="sidebarDrawerLabel"><i class="bi bi-cloud-sun me-2 text-success"></i>FTNHS Weather Hub</h5>
@@ -125,12 +163,11 @@
             <div class="offcanvas-body d-flex flex-column justify-content-between px-4 py-4">
                 <ul class="navbar-nav gap-2">
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link active rounded px-3 py-2 bg-success text-white fw-medium" href="/forecast"><i class="bi bi-calendar-week me-2"></i>Forecast</a></li>
+                    <li class="nav-item"><a class="nav-link active rounded px-3 py-2 bg-success text-white fw-medium shadow-sm" href="/forecast"><i class="bi bi-calendar-week me-2"></i>Forecast</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/history"><i class="bi bi-clock-history me-2 text-primary"></i>History</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/analytics"><i class="bi bi-graph-up-arrow me-2 text-info"></i>Analytics</a></li>
                     <li class="nav-item"><a class="nav-link rounded px-3 py-2" href="/about"><i class="bi bi-info-circle me-2 text-secondary"></i>About System</a></li>
                     
-                    <!-- Admin-Only Navigation Links -->
                     <th:block th:if="${isAdminLoggedIn}">
                         <li class="nav-item mt-3 pt-3 border-top border-success border-opacity-25">
                             <span class="text-muted small text-uppercase px-3 fw-bold tracking-wider">Admin Controls</span>
@@ -142,12 +179,12 @@
                 
                 <div class="pt-3 border-top border-success border-opacity-25">
                     <div th:if="${!isAdminLoggedIn}">
-                        <a href="/login" class="btn btn-outline-theme w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
+                        <a href="/login" class="btn soft-btn text-success w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Admin Login</a>
                     </div>
                     <div th:if="${isAdminLoggedIn}">
                         <div class="small text-muted mb-2"><i class="bi bi-person-circle text-success me-1"></i> Logged in as <strong class="text-dark" th:text="${adminName}">Admin</strong></div>
                         <form action="/logout" method="post">
-                            <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                            <button type="submit" class="btn soft-btn text-danger w-100 fw-bold py-2"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
                         </form>
                     </div>
                 </div>
@@ -161,8 +198,8 @@
                 <p class="text-muted small mb-0">Hourly meteorological projections and simulated modal evaluations for Fermin Tayabas National High School.</p>
             </div>
 
-            <!-- Error Banner if API fails -->
-            <div class="alert alert-danger border-0 shadow-sm rounded-4" th:if="${error != null}" th:text="${error}">
+            <!-- Error Banner -->
+            <div class="alert alert-danger border-0 soft-card" th:if="${error != null}" th:text="${error}">
                 Unable to load forecast data.
             </div>
 
@@ -170,10 +207,10 @@
             <div class="row mb-4 g-4" th:if="${hourlyTimes != null and !hourlyTimes.isEmpty()}">
                 <!-- Rainfall Chart -->
                 <div class="col-12 col-lg-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                    <div class="card border-0 soft-card h-100">
                         <div class="card-body p-4">
                             <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-rain me-2 text-primary"></i>10-Hour Rainfall Forecast (mm/hr)</h5>
-                            <div class="chart-container">
+                            <div class="chart-container soft-inset p-2">
                                 <canvas id="forecastRainfallChart"></canvas>
                             </div>
                         </div>
@@ -181,10 +218,10 @@
                 </div>
                 <!-- Temperature Chart -->
                 <div class="col-12 col-lg-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                    <div class="card border-0 soft-card h-100">
                         <div class="card-body p-4">
                             <h5 class="fw-bold text-dark mb-3"><i class="bi bi-thermometer-half me-2 text-warning"></i>10-Hour Temperature Forecast (°C)</h5>
-                            <div class="chart-container">
+                            <div class="chart-container soft-inset p-2">
                                 <canvas id="forecastTemperatureChart"></canvas>
                             </div>
                         </div>
@@ -192,29 +229,28 @@
                 </div>
             </div>
 
-            <!-- Timeline Cards Grid (Horizontal Swipe on Mobile) -->
-            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" th:if="${hourlyTimes != null and !hourlyTimes.isEmpty()}">
+            <!-- Timeline Cards Grid (Soft UI Cards with 3D Icons) -->
+            <div class="card border-0 soft-card p-4 mb-4" th:if="${hourlyTimes != null and !hourlyTimes.isEmpty()}">
                 <h5 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history me-2 text-secondary"></i>Hourly Timeline (Swipe Horizontally)</h5>
                 
                 <div class="timeline-scroll" id="forecastTimeline">
-                    <!-- Embedded data attributes used by the Chart script -->
-                    <div class="card timeline-card border-0 bg-light text-center p-3" 
+                    <div class="card timeline-card border-0 text-center p-3" 
                          th:each="i : ${#numbers.sequence(0, hourlyTimes.size() - 1)}" 
                          th:attr="data-time=${hourlyTimes[i]}, data-temp=${hourlyTemps[i]}, data-precip=${hourlyPrecip[i]}">
                         
-                        <!-- Date Badge -->
                         <div class="badge bg-success bg-opacity-10 text-success mb-1 fw-bold py-1" style="font-size: 0.65rem;" th:text="${#strings.substring(hourlyTimes[i], 5, 10)}">05-26</div>
                         <div class="small fw-bold text-dark mb-2" th:text="${#strings.substring(hourlyTimes[i], 11, 16)}">00:00</div>
                         
-                        <div class="fs-2 my-2 text-primary">
-                            <i class="bi bi-cloud-rain" th:if="${hourlyPrecip[i] >= 7.5}"></i>
-                            <i class="bi bi-cloud-sun" th:if="${hourlyPrecip[i] < 7.5}"></i>
+                        <div class="my-2 d-flex justify-content-center">
+                            <img th:src="${hourlyPrecip[i] > 15.0 ? '/images/weather/heavy_rain_3d.png' : (hourlyPrecip[i] >= 7.5 ? '/images/weather/rain_3d.png' : (hourlyPrecip[i] > 0.0 ? '/images/weather/drizzle_3d.png' : '/images/weather/clear_3d.png'))}" 
+                                 src="/images/weather/clear_3d.png" 
+                                 alt="Icon" 
+                                 class="weather-3d-icon-sm">
                         </div>
 
                         <div class="metric-value fw-bold fs-5 text-dark mb-1" th:text="${hourlyTemps[i]} + '°C'">24°C</div>
                         <div class="small text-secondary mb-3 metric-value" th:text="${hourlyPrecip[i]} + ' mm'">0.0 mm</div>
 
-                        <!-- Estimated Mode Badge -->
                         <div>
                             <span class="badge bg-success w-100 py-1" th:if="${hourlyPrecip[i] < 7.5}">HAYO</span>
                             <span class="badge bg-warning w-100 py-1" th:if="${hourlyPrecip[i] >= 7.5 and hourlyPrecip[i] <= 15.0}">HINAY</span>
@@ -227,11 +263,11 @@
         </div>
     </div>
 
-    <footer class="bg-white border-top py-3 mt-auto text-muted small">
+    <footer class="bg-white border-top py-4 mt-auto text-muted small">
         <div class="container text-center">
-            <p class="mb-1 fw-bold text-dark" style="font-size: 0.8rem;">FTNHS Weather Hub</p>
-            <p class="mb-1" style="font-size: 0.75rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
-            <div class="d-flex justify-content-center flex-row flex-nowrap gap-2 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.68rem;">
+            <p class="mb-1 fw-bold text-dark" style="font-size: 0.85rem;">FTNHS Weather Hub</p>
+            <p class="mb-2" style="font-size: 0.78rem;">Developed by <span class="text-success fw-medium">Anthony Riel C. Diango CpE, LPT</span></p>
+            <div class="d-flex justify-content-center flex-row flex-nowrap gap-3 text-secondary opacity-75 overflow-hidden px-2" style="font-size: 0.72rem;">
                 <span class="text-nowrap"><i class="bi bi-server me-1"></i>Spring Boot</span>
                 <span class="text-nowrap"><i class="bi bi-cloud-sun me-1"></i>Open-Meteo</span>
                 <span class="text-nowrap"><i class="bi bi-shield-check me-1"></i>Supabase</span>
@@ -243,18 +279,14 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Script to render graphs and filter forecast starting from current hour -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
             const now = new Date(nowStr);
-            
-            // Get the current hour marker in milliseconds (e.g. 9:00 PM)
             const currentHourTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0).getTime();
             
             const cards = document.querySelectorAll('.timeline-card');
             
-            // Arrays to hold the next 10 hours of data
             let chartLabels = [];
             let chartTempData = [];
             let chartRainData = [];
@@ -266,13 +298,10 @@
                     const cardTimeObj = new Date(cardTimeStr);
                     const cardTime = cardTimeObj.getTime();
                     
-                    // Hide any past hour cards so timeline starts strictly at the next hour
                     if (cardTime < currentHourTime) {
                         card.style.display = 'none';
                     } else {
-                        // Gather exact 10 hours of forecast data for the charts
                         if (dataCount < 10) {
-                            // Format Label to MM-DD HH:00
                             const month = ("0" + (cardTimeObj.getMonth() + 1)).slice(-2);
                             const day = ("0" + cardTimeObj.getDate()).slice(-2);
                             const hours = ("0" + cardTimeObj.getHours()).slice(-2);
@@ -287,10 +316,9 @@
                 }
             });
 
-            // Initialize Charts if data was gathered
             if (chartLabels.length > 0) {
                 Chart.defaults.font.family = "'Inter', sans-serif";
-                Chart.defaults.color = '#6c757d';
+                Chart.defaults.color = '#4a5568';
 
                 const maxRain = Math.max(...chartRainData, 0.5);
                 const dynamicRainMax = Math.max(maxRain * 1.2, 1.0);
@@ -300,7 +328,6 @@
                 const dynamicTempMin = Math.floor(minTemp - 1);
                 const dynamicTempMax = Math.ceil(maxTemp + 1);
 
-                // Rainfall Bar Chart
                 const ctxRain = document.getElementById('forecastRainfallChart').getContext('2d');
                 new Chart(ctxRain, {
                     type: 'bar',
@@ -309,10 +336,10 @@
                         datasets: [{
                             label: 'Rainfall Forecast (mm/hr)',
                             data: chartRainData,
-                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
-                            borderColor: 'rgb(13, 110, 253)',
+                            backgroundColor: 'rgba(2, 132, 199, 0.75)',
+                            borderColor: '#0284c7',
                             borderWidth: 1,
-                            borderRadius: 4
+                            borderRadius: 6
                         }]
                     },
                     options: {
@@ -323,18 +350,12 @@
                             tooltip: { mode: 'index', intersect: false }
                         },
                         scales: { 
-                            x: {
-                                ticks: { maxTicksLimit: 10, maxRotation: 45 }
-                            },
-                            y: { 
-                                beginAtZero: true, 
-                                suggestedMax: dynamicRainMax 
-                            } 
+                            x: { ticks: { maxTicksLimit: 10, maxRotation: 45 } },
+                            y: { beginAtZero: true, suggestedMax: dynamicRainMax } 
                         }
                     }
                 });
 
-                // Temperature Line Chart
                 const ctxTemp = document.getElementById('forecastTemperatureChart').getContext('2d');
                 new Chart(ctxTemp, {
                     type: 'line',
@@ -343,13 +364,13 @@
                         datasets: [{
                             label: 'Temperature Forecast (°C)',
                             data: chartTempData,
-                            backgroundColor: 'rgba(25, 135, 84, 0.2)',
-                            borderColor: 'rgb(25, 135, 84)',
+                            backgroundColor: 'rgba(21, 128, 61, 0.2)',
+                            borderColor: '#15803d',
                             borderWidth: 2,
-                            pointBackgroundColor: 'rgb(25, 135, 84)',
-                            pointRadius: 3,
+                            pointBackgroundColor: '#15803d',
+                            pointRadius: 4,
                             fill: true,
-                            tension: 0.3
+                            tension: 0.35
                         }]
                     },
                     options: {
@@ -360,14 +381,8 @@
                             tooltip: { mode: 'index', intersect: false }
                         },
                         scales: { 
-                            x: {
-                                ticks: { maxTicksLimit: 10, maxRotation: 45 }
-                            },
-                            y: { 
-                                beginAtZero: false, 
-                                suggestedMin: dynamicTempMin, 
-                                suggestedMax: dynamicTempMax 
-                            } 
+                            x: { ticks: { maxTicksLimit: 10, maxRotation: 45 } },
+                            y: { beginAtZero: false, suggestedMin: dynamicTempMin, suggestedMax: dynamicTempMax } 
                         }
                     }
                 });
