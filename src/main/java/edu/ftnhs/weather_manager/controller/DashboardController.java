@@ -17,6 +17,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -57,15 +58,17 @@ public class DashboardController {
     private final WeatherDecisionEngine weatherDecisionEngine;
     private final PushNotificationService pushNotificationService;
     private final OverrideLogRepository overrideLogRepository;
+    private final PasswordEncoder passwordEncoder;
     private final ScheduledExecutorService overrideScheduler = Executors.newSingleThreadScheduledExecutor();
 
-    public DashboardController(WeatherLogRepository weatherLogRepository, 
+    public DashboardController(WeatherLogRepository weatherLogRepository,
                                LearningStatusLogRepository learningStatusLogRepository,
                                UserRepository userRepository,
                                NotificationLogRepository notificationLogRepository,
                                WeatherDecisionEngine weatherDecisionEngine,
                                PushNotificationService pushNotificationService,
-                               OverrideLogRepository overrideLogRepository) {
+                               OverrideLogRepository overrideLogRepository,
+                               PasswordEncoder passwordEncoder) {
         this.weatherLogRepository = weatherLogRepository;
         this.learningStatusLogRepository = learningStatusLogRepository;
         this.userRepository = userRepository;
@@ -73,6 +76,7 @@ public class DashboardController {
         this.weatherDecisionEngine = weatherDecisionEngine;
         this.pushNotificationService = pushNotificationService;
         this.overrideLogRepository = overrideLogRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     private boolean checkAdmin(String adminUser) {
@@ -267,7 +271,23 @@ public class DashboardController {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             boolean isAdmin = user.getRole() != null && user.getRole().trim().equalsIgnoreCase("ADMIN");
-            boolean passwordMatches = password.equals(user.getPasswordHash());
+            String storedHash = user.getPasswordHash();
+
+            // Determine if the stored value is already a BCrypt hash
+            boolean isBcrypt = storedHash != null && storedHash.startsWith("$2");
+            boolean passwordMatches;
+
+            if (isBcrypt) {
+                // Normal BCrypt verification
+                passwordMatches = passwordEncoder.matches(password, storedHash);
+            } else {
+                // Legacy plaintext — compare directly, then migrate to BCrypt on success
+                passwordMatches = password.equals(storedHash);
+                if (passwordMatches) {
+                    user.setPasswordHash(passwordEncoder.encode(password));
+                    userRepository.save(user);
+                }
+            }
 
             if (isAdmin && passwordMatches) {
                 try {
@@ -293,7 +313,7 @@ public class DashboardController {
                 return "redirect:/";
             }
         }
-        
+
         model.addAttribute("error", "Invalid username or password.");
         return "login";
     }
@@ -447,11 +467,11 @@ public class DashboardController {
         if (id != null) {
             user = userRepository.findById(id).orElse(new User());
             if (password != null && !password.trim().isEmpty()) {
-                user.setPasswordHash(password);
+                user.setPasswordHash(passwordEncoder.encode(password));
             }
         } else {
             user = new User();
-            user.setPasswordHash(password);
+            user.setPasswordHash(passwordEncoder.encode(password));
             user.setStatus("ACTIVE");
             user.setIsActive(true);
         }
