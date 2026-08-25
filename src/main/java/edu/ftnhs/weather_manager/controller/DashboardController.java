@@ -294,16 +294,22 @@ public class DashboardController {
                     Cookie userCookie = new Cookie("adminUser", encodedUser);
                     userCookie.setPath("/");
                     userCookie.setMaxAge(30 * 24 * 60 * 60);
+                    userCookie.setSecure(true);
+                    userCookie.setHttpOnly(true);
                     response.addCookie(userCookie);
 
                     Cookie nameCookie = new Cookie("adminName", encodedName);
                     nameCookie.setPath("/");
                     nameCookie.setMaxAge(30 * 24 * 60 * 60);
+                    nameCookie.setSecure(true);
+                    nameCookie.setHttpOnly(true);
                     response.addCookie(nameCookie);
                 } catch (Exception e) {
                     Cookie userCookie = new Cookie("adminUser", user.getUsername());
                     userCookie.setPath("/");
                     userCookie.setMaxAge(30 * 24 * 60 * 60);
+                    userCookie.setSecure(true);
+                    userCookie.setHttpOnly(true);
                     response.addCookie(userCookie);
                 }
 
@@ -320,11 +326,15 @@ public class DashboardController {
         Cookie userCookie = new Cookie("adminUser", "");
         userCookie.setPath("/");
         userCookie.setMaxAge(0);
+        userCookie.setSecure(true);
+        userCookie.setHttpOnly(true);
         response.addCookie(userCookie);
 
         Cookie nameCookie = new Cookie("adminName", "");
         nameCookie.setPath("/");
         nameCookie.setMaxAge(0);
+        nameCookie.setSecure(true);
+        nameCookie.setHttpOnly(true);
         response.addCookie(nameCookie);
 
         return "redirect:/";

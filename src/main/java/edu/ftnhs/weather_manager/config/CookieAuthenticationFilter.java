@@ -41,6 +41,8 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
                     if (userOpt.isPresent() && Boolean.TRUE.equals(userOpt.get().getIsActive())) {
                         User user = userOpt.get();
                         String role = user.getRole() != null ? user.getRole().toUpperCase() : "USER";
+                        
+                        // Ensures Spring Security matches @PreAuthorize("hasRole('ADMIN')")
                         if (!role.startsWith("ROLE_")) {
                             role = "ROLE_" + role;
                         }
