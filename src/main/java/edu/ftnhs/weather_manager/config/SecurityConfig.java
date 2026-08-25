@@ -29,10 +29,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf
-                // REST endpoints are called via JS fetch — exclude from CSRF
-                .ignoringRequestMatchers("/api/**")
-            )
+            // Disable CSRF to allow custom POST forms (like login, logout, and admin actions) to process successfully
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/forecast", "/history", "/analytics", "/about", "/css/**", "/js/**", "/images/**", "/manifest.json").permitAll()
                 .requestMatchers("/login", "/logout", "/error", "/api/**").permitAll()
