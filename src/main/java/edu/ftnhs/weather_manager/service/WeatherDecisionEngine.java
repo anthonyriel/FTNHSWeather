@@ -122,7 +122,7 @@ public class WeatherDecisionEngine {
                 weatherLogRepository.save(logEntry);
                 log.info("Weather log saved successfully to Supabase with all fields populated.");
 
-                // Auto-delete logs older than 1 week (7 days) relative to the newly added log timestamp
+                // Auto-delete weather logs older than 1 week (7 days)
                 try {
                     OffsetDateTime cutoff = logEntry.getTimestamp().minusDays(7);
                     weatherLogRepository.deleteByTimestampBefore(cutoff);
@@ -132,6 +132,15 @@ public class WeatherDecisionEngine {
                 }
 
                 evaluateAndSaveLearningStatus(precipitation, windSpeed);
+
+                // Auto-delete learning status logs older than 1 week (7 days)
+                try {
+                    LocalDate statusCutoff = LocalDate.now(ZoneId.of("Asia/Manila")).minusDays(7);
+                    learningStatusLogRepository.deleteByTargetDateBefore(statusCutoff);
+                    log.info("Auto-cleanup: Purged learning status logs older than target date {}", statusCutoff);
+                } catch (Exception e) {
+                    log.error("Failed to auto-delete old learning status logs: ", e);
+                }
             }
         } catch (HttpClientErrorException.TooManyRequests e) {
             log.warn("Open-Meteo API rate limit reached (429 Too Many Requests). Skipping this check and using existing cached data.");

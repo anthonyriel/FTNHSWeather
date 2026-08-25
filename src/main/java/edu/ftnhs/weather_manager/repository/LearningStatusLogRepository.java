@@ -13,4 +13,7 @@ public interface LearningStatusLogRepository extends JpaRepository<LearningStatu
 
     @Transactional
     void deleteByTargetDate(LocalDate targetDate);
+
+    // Auto-delete learning status logs older than the specified target date cutoff
+    void deleteByTargetDateBefore(LocalDate cutoffDate);
 }
