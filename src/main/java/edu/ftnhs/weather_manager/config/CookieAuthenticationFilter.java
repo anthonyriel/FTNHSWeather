@@ -35,22 +35,31 @@ public class CookieAuthenticationFilter extends OncePerRequestFilter {
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("adminUser".equals(cookie.getName())) {
-                    String username = URLDecoder.decode(cookie.getValue(), StandardCharsets.UTF_8);
-                    Optional<User> userOpt = userRepository.findByUsername(username);
-                    
-                    if (userOpt.isPresent() && Boolean.TRUE.equals(userOpt.get().getIsActive())) {
-                        User user = userOpt.get();
-                        String role = user.getRole() != null ? user.getRole().toUpperCase() : "USER";
+                    try {
+                        String username = URLDecoder.decode(cookie.getValue(), StandardCharsets.UTF_8);
+                        Optional<User> userOpt = userRepository.findByUsername(username);
                         
-                        // Ensures Spring Security matches @PreAuthorize("hasRole('ADMIN')")
-                        if (!role.startsWith("ROLE_")) {
-                            role = "ROLE_" + role;
+                        if (userOpt.isPresent()) {
+                            User user = userOpt.get();
+                            Boolean isActive = user.getIsActive();
+
+                            // Allow access if is_active is true OR null (handles legacy/seeded rows gracefully)
+                            if (isActive == null || Boolean.TRUE.equals(isActive)) {
+                                String role = user.getRole() != null ? user.getRole().toUpperCase() : "USER";
+                                
+                                // Ensures Spring Security matches @PreAuthorize("hasRole('ADMIN')")
+                                if (!role.startsWith("ROLE_")) {
+                                    role = "ROLE_" + role;
+                                }
+                                
+                                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                                        user.getUsername(), null, Collections.singletonList(new SimpleGrantedAuthority(role))
+                                );
+                                SecurityContextHolder.getContext().setAuthentication(auth);
+                            }
                         }
-                        
-                        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                                user.getUsername(), null, Collections.singletonList(new SimpleGrantedAuthority(role))
-                        );
-                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    } catch (Exception e) {
+                        logger.error("Error processing authentication cookie: " + e.getMessage());
                     }
                 }
             }
