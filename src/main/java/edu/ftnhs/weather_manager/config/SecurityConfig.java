@@ -29,7 +29,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                // REST endpoints are called via JS fetch — exclude from CSRF
+                .ignoringRequestMatchers("/api/**")
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/forecast", "/history", "/analytics", "/about", "/css/**", "/js/**", "/images/**", "/manifest.json").permitAll()
                 .requestMatchers("/login", "/logout", "/error", "/api/**").permitAll()

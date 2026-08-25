@@ -68,15 +68,15 @@ public class WeatherDecisionEngine {
         }
     }
 
-    // Ensures the fetch runs exactly every 10 minutes continuously
-    @Scheduled(fixedRate = 600000) 
+    // Executes precisely at exactly :00, :10, :20, :30, :40, and :50 of every hour in Manila time
+    @Scheduled(cron = "0 0/10 * * * ?", zone = "Asia/Manila") 
     public void scheduledWeatherCheck() {
-        log.info("Executing scheduled 10-minute weather check...");
+        log.info("Executing cron-aligned 10-minute weather check...");
         fetchWeatherAndEvaluateStatus();
     }
 
     public void fetchWeatherAndEvaluateStatus() {
-        log.info("Initiating weather check via external trigger...");
+        log.info("Fetching real-time weather data from Open-Meteo API...");
 
         try {
             OpenMeteoResponse response = restClient.get()
