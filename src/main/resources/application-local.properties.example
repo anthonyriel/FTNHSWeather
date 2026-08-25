@@ -1,0 +1,24 @@
+# ==============================================================
+# LOCAL DEVELOPMENT OVERRIDES — EXAMPLE TEMPLATE
+# Copy this file to application-local.properties and fill in real values.
+# This example file IS safe to commit. The real file is gitignored.
+# ==============================================================
+
+# --- Database (Supabase) ---
+# Mirror the exact env var names used on Render so local = prod config
+SPRING_DATASOURCE_URL=jdbc:postgresql://<host>:<port>/postgres
+SPRING_DATASOURCE_USERNAME=postgres.<project-ref>
+SPRING_DATASOURCE_PASSWORD=<your-db-password>
+
+# --- VAPID Web Push Keys (run GenerateVapidKeys to create new ones) ---
+VAPID_PUBLIC_KEY=<base64url-encoded-public-key>
+VAPID_PRIVATE_KEY=<base64url-encoded-private-key>
+VAPID_SUBJECT=mailto:<your-email>
+
+# --- Local dev overrides ---
+server.port=8081
+server.servlet.session.cookie.secure=false
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+logging.level.org.springframework.web=DEBUG
+logging.level.org.hibernate.SQL=DEBUG
