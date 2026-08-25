@@ -273,15 +273,12 @@ public class DashboardController {
             boolean isAdmin = user.getRole() != null && user.getRole().trim().equalsIgnoreCase("ADMIN");
             String storedHash = user.getPasswordHash();
 
-            // Determine if the stored value is already a BCrypt hash
             boolean isBcrypt = storedHash != null && storedHash.startsWith("$2");
             boolean passwordMatches;
 
             if (isBcrypt) {
-                // Normal BCrypt verification
                 passwordMatches = passwordEncoder.matches(password, storedHash);
             } else {
-                // Legacy plaintext — compare directly, then migrate to BCrypt on success
                 passwordMatches = password.equals(storedHash);
                 if (passwordMatches) {
                     user.setPasswordHash(passwordEncoder.encode(password));
@@ -353,7 +350,6 @@ public class DashboardController {
         return "redirect:/"; 
     }
 
-    // Role-based Access Control added to API Override
     @PreAuthorize("hasRole('ADMIN') or hasRole('PRINCIPAL')")
     @PostMapping("/api/v1/override")
     public ResponseEntity<?> handleApiOverride(@RequestBody OverrideRequest request, 
@@ -365,7 +361,6 @@ public class DashboardController {
         ZoneId phZone = ZoneId.of("Asia/Manila");
         LocalDate today = LocalDate.now(phZone);
         
-        // Capture previous mode for audit tracking
         Optional<LearningStatusLog> existingStatus = learningStatusLogRepository.findTopByTargetDateOrderByCreatedAtDesc(today);
         String previousMode = existingStatus.map(log -> log != null ? log.getStatus() : "IN_PERSON").orElse("IN_PERSON");
 
@@ -376,7 +371,6 @@ public class DashboardController {
             fullReason += " | Notes: " + request.getNotes();
         }
 
-        // Save learning status log
         LearningStatusLog manualLog = new LearningStatusLog();
         manualLog.setTargetDate(today);
         manualLog.setStatus(request.getMode());
@@ -385,7 +379,6 @@ public class DashboardController {
         manualLog.setCreatedAt(OffsetDateTime.now(phZone));
         learningStatusLogRepository.save(manualLog);
 
-        // Save audit trail record into override_logs table
         OverrideLog auditLog = new OverrideLog();
         auditLog.setUserId(decodeCookieValue(adminUser));
         auditLog.setPreviousMode(previousMode);
@@ -395,7 +388,6 @@ public class DashboardController {
         auditLog.setCreatedAt(OffsetDateTime.now(phZone));
         overrideLogRepository.save(auditLog);
 
-        // Schedule automated reversion after TTL expires
         long ttlMinutes = request.getDurationMinutes();
         overrideScheduler.schedule(() -> {
             try {
@@ -420,7 +412,6 @@ public class DashboardController {
         return "redirect:/";
     }
 
-    // Role-based Access Control added to Broadcasting
     @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
     @PostMapping("/admin/send-advisory")
     public String sendManualAdvisory(@RequestParam String title, 
@@ -445,7 +436,6 @@ public class DashboardController {
     public String viewUserManagement(Model model, @CookieValue(value = "adminUser", required = false) String adminUser) {
         if (!checkAdmin(adminUser)) return "redirect:/login";
 
-        // Only load active users so soft-deleted accounts do not show up
         model.addAttribute("users", userRepository.findByIsActiveTrue());
         return "manage-users";
     }
@@ -491,7 +481,6 @@ public class DashboardController {
     public String deleteUser(@PathVariable UUID id, @CookieValue(value = "adminUser", required = false) String adminUser) {
         if (!checkAdmin(adminUser)) return "redirect:/login";
         
-        // Execute Soft Delete logic from Task 2.3
         userRepository.softDeleteUser(id);
         
         return "redirect:/admin/users";
@@ -531,15 +520,33 @@ public class DashboardController {
     public String viewWeatherHistory(Model model) {
         ZoneId phZone = ZoneId.of("Asia/Manila");
         
-        List<WeatherLog> logs = weatherLogRepository.findAllByOrderByTimestampDesc()
-            .stream()
-            .map(log -> {
-                if (log.getTimestamp() != null) {
-                    OffsetDateTime manilaTime = log.getTimestamp()
-                            .atZoneSameInstant(phZone)
-                            .toOffsetDateTime();
-                    log.setTimestamp(manilaTime);
+        List<WeatherLog> allLogs = weatherLogRepository.findAllByOrderByTimestampDesc();
+        
+        // Find the latest timestamp to establish the rolling 1-week window
+        OffsetDateTime latestTimestamp = null;
+        for (WeatherLog log : allLogs) {
+            if (log.getTimestamp() != null) {
+                latestTimestamp = log.getTimestamp();
+                break;
+            }
+        }
+        
+        final OffsetDateTime cutoff = (latestTimestamp != null) ? latestTimestamp.minusDays(7) : null;
+
+        // Filter logs to only include the last 1 week from the latest recorded log
+        List<WeatherLog> logs = allLogs.stream()
+            .filter(log -> {
+                if (log.getTimestamp() == null) return false;
+                if (cutoff != null) {
+                    return !log.getTimestamp().isBefore(cutoff);
                 }
+                return true;
+            })
+            .map(log -> {
+                OffsetDateTime manilaTime = log.getTimestamp()
+                        .atZoneSameInstant(phZone)
+                        .toOffsetDateTime();
+                log.setTimestamp(manilaTime);
                 return log;
             })
             .collect(Collectors.toList());
@@ -594,7 +601,6 @@ public class DashboardController {
         return "daily-report";
     }
 
-    // Role-based Access Control added to Diagnostics
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/diagnostics")
     public String viewDiagnostics(Model model, @CookieValue(value = "adminUser", required = false) String adminUser) {

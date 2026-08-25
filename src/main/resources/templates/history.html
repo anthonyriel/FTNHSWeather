@@ -243,7 +243,7 @@
                 <div class="col-12 col-lg-6">
                     <div class="card border-0 soft-card h-100">
                         <div class="card-body p-4">
-                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-rain me-2 text-primary"></i>Rainfall Trends (mm/hr)</h5>
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-cloud-rain me-2 text-primary"></i>Rainfall Trends (Last 24 Hours)</h5>
                             <div class="chart-container soft-inset p-2">
                                 <canvas id="rainfallChart"></canvas>
                             </div>
@@ -254,7 +254,7 @@
                 <div class="col-12 col-lg-6">
                     <div class="card border-0 soft-card h-100">
                         <div class="card-body p-4">
-                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-thermometer-half me-2 text-warning"></i>Temperature Trends (°C)</h5>
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-thermometer-half me-2 text-warning"></i>Temperature Trends (Last 24 Hours)</h5>
                             <div class="chart-container soft-inset p-2">
                                 <canvas id="temperatureChart"></canvas>
                             </div>
@@ -267,6 +267,7 @@
                 <div th:each="log : ${weatherLogs}" 
                      class="log-entry"
                      th:data-timestamp="${#temporals.format(log.timestamp, 'MMM dd HH:mm')}"
+                     th:data-raw-time="${log.timestamp}"
                      th:data-rain="${log.precipitationMm}"
                      th:data-temp="${log.temperature != null ? log.temperature : 0.0}">
                 </div>
@@ -327,16 +328,34 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const entries = document.querySelectorAll("#weatherDataStore .log-entry");
-            let labels = [];
-            let rainData = [];
-            let tempData = [];
+            const entryElements = document.querySelectorAll("#weatherDataStore .log-entry");
+            if (entryElements.length === 0) return;
 
-            entries.forEach(entry => {
-                labels.unshift(entry.getAttribute("data-timestamp"));
-                rainData.unshift(parseFloat(entry.getAttribute("data-rain")));
-                tempData.unshift(parseFloat(entry.getAttribute("data-temp")));
+            // Map data attributes into structured objects
+            let allEntries = Array.from(entryElements).map(entry => {
+                return {
+                    timestampStr: entry.getAttribute("data-timestamp"),
+                    rawTime: new Date(entry.getAttribute("data-raw-time")),
+                    rain: parseFloat(entry.getAttribute("data-rain")),
+                    temp: parseFloat(entry.getAttribute("data-temp"))
+                };
             });
+
+            // Find the latest timestamp from the records as our reference point
+            let latestTime = new Date(Math.max(...allEntries.map(e => e.rawTime.getTime())));
+            
+            // Calculate exactly 24 hours prior to the latest record
+            let twentyFourHoursAgo = new Date(latestTime.getTime() - (24 * 60 * 60 * 1000));
+
+            // Filter entries to only include those within the last 24 hours
+            let filteredEntries = allEntries.filter(e => e.rawTime >= twentyFourHoursAgo);
+
+            // Sort chronologically (oldest to newest) for chart plotting
+            filteredEntries.sort((a, b) => a.rawTime - b.rawTime);
+
+            let labels = filteredEntries.map(e => e.timestampStr);
+            let rainData = filteredEntries.map(e => e.rain);
+            let tempData = filteredEntries.map(e => e.temp);
 
             if (labels.length > 0) {
                 Chart.defaults.font.family = "'Inter', sans-serif";

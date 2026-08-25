@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
@@ -69,12 +70,13 @@ public class WeatherDecisionEngine {
     }
 
     // Executes precisely at exactly :00, :10, :20, :30, :40, and :50 of every hour in Manila time
-    @Scheduled(cron = "0 0/10 * * * ?", zone = "Asia/Manila") 
+    @Scheduled(cron = "0 0/10 * * * ?", zone = "Asia/Manila")
     public void scheduledWeatherCheck() {
         log.info("Executing cron-aligned 10-minute weather check...");
         fetchWeatherAndEvaluateStatus();
     }
 
+    @Transactional
     public void fetchWeatherAndEvaluateStatus() {
         log.info("Fetching real-time weather data from Open-Meteo API...");
 
@@ -118,6 +120,15 @@ public class WeatherDecisionEngine {
                 
                 weatherLogRepository.save(logEntry);
                 log.info("Weather log saved successfully to Supabase with all fields populated.");
+
+                // Auto-delete logs older than 1 week (7 days) relative to the newly added log timestamp
+                try {
+                    OffsetDateTime cutoff = logEntry.getTimestamp().minusDays(7);
+                    weatherLogRepository.deleteByTimestampBefore(cutoff);
+                    log.info("Auto-cleanup: Purged historical weather logs older than {}", cutoff);
+                } catch (Exception e) {
+                    log.error("Failed to auto-delete old weather logs: ", e);
+                }
 
                 evaluateAndSaveLearningStatus(precipitation, windSpeed);
             }
