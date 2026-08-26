@@ -8,6 +8,7 @@ import edu.ftnhs.weather_manager.repository.WeatherLogRepository;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,10 @@ public class WeatherDecisionEngine {
     private final LearningStatusLogRepository learningStatusLogRepository;
     private final PushNotificationService pushNotificationService;
 
+    // Feature toggle for cron jobs. Defaults to true for production (Render).
+    @Value("${weather.cron.enabled:true}")
+    private boolean isCronEnabled;
+
     private static final String WEATHER_API_URL = 
     "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,pressure_msl,wind_speed_10m,visibility,uv_index,precipitation_probability&hourly=temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m,precipitation_probability&timezone=auto";
 
@@ -44,6 +49,11 @@ public class WeatherDecisionEngine {
 
     @PostConstruct
     public void initializeStartupCheck() {
+        if (!isCronEnabled) {
+            log.info("Automated weather synchronization is DISABLED locally. Skipping startup check.");
+            return;
+        }
+
         try {
             ZoneId phZone = ZoneId.of("Asia/Manila");
             OffsetDateTime now = OffsetDateTime.now(phZone);
@@ -73,6 +83,10 @@ public class WeatherDecisionEngine {
     // Executes precisely at exactly :00, :10, :20, :30, :40, and :50 of every hour in Manila time
     @Scheduled(cron = "0 0/10 * * * ?", zone = "Asia/Manila")
     public void scheduledWeatherCheck() {
+        if (!isCronEnabled) {
+            return; // Silently skip the scheduled run if disabled
+        }
+        
         log.info("Executing cron-aligned 10-minute weather check...");
         fetchWeatherAndEvaluateStatus();
     }

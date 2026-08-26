@@ -14,6 +14,12 @@
       "name": "vapid.subject",
       "type": "java.lang.String",
       "description": "VAPID subject contact URI."
+    },
+    {
+      "name": "weather.cron.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enables or disables the automated 10-minute weather check cron job. Defaults to true in production.",
+      "defaultValue": false
     }
   ]
 }
