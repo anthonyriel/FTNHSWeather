@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.RestClient;
+import edu.ftnhs.weather_manager.service.WeatherApiClient;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -56,6 +56,7 @@ public class DashboardController {
     private final UserRepository userRepository;
     private final NotificationLogRepository notificationLogRepository;
     private final WeatherDecisionEngine weatherDecisionEngine;
+    private final WeatherApiClient weatherApiClient;
     private final PushNotificationService pushNotificationService;
     private final OverrideLogRepository overrideLogRepository;
     private final PasswordEncoder passwordEncoder;
@@ -68,12 +69,14 @@ public class DashboardController {
                                WeatherDecisionEngine weatherDecisionEngine,
                                PushNotificationService pushNotificationService,
                                OverrideLogRepository overrideLogRepository,
-                               PasswordEncoder passwordEncoder) {
+                               PasswordEncoder passwordEncoder,
+                               WeatherApiClient weatherApiClient) {
         this.weatherLogRepository = weatherLogRepository;
         this.learningStatusLogRepository = learningStatusLogRepository;
         this.userRepository = userRepository;
         this.notificationLogRepository = notificationLogRepository;
         this.weatherDecisionEngine = weatherDecisionEngine;
+        this.weatherApiClient = weatherApiClient;
         this.pushNotificationService = pushNotificationService;
         this.overrideLogRepository = overrideLogRepository;
         this.passwordEncoder = passwordEncoder;
@@ -238,19 +241,16 @@ public class DashboardController {
             .collect(Collectors.toList());
         model.addAttribute("notificationLogs", notificationLogs);
 
-        // Fetch forecast data for the Mode Projection feature
-        RestClient restClient = RestClient.create();
-        String url = "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&hourly=precipitation,wind_speed_10m&timezone=auto";
+        // Reuse the forecast from the latest weather fetch without spending API quota.
         try {
-            OpenMeteoResponse forecastResponse = restClient.get()
-                    .uri(url)
-                    .retrieve()
-                    .body(OpenMeteoResponse.class);
+            OpenMeteoResponse forecastResponse = weatherApiClient.getCachedResponse();
             
             if (forecastResponse != null && forecastResponse.hourly() != null) {
                 model.addAttribute("forecastTimes", forecastResponse.hourly().time());
                 model.addAttribute("forecastPrecip", forecastResponse.hourly().precipitation());
                 model.addAttribute("forecastWind", forecastResponse.hourly().windSpeed10m());
+            } else {
+                model.addAttribute("forecastError", "Forecast unavailable until the next weather fetch.");
             }
         } catch (Exception e) {
             model.addAttribute("forecastError", "Unable to fetch projection data.");
@@ -496,28 +496,26 @@ public class DashboardController {
         return "redirect:/admin/users";
     }
 
-    @GetMapping("/test-weather")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/test-weather")
     public String testWeatherFetch() {
-        weatherDecisionEngine.fetchWeatherAndEvaluateStatus();
-        return "redirect:/";
+        weatherDecisionEngine.fetchWeatherManually();
+        return "redirect:/admin/diagnostics";
     }
 
     @GetMapping("/forecast")
     public String viewForecast(Model model) {
-        RestClient restClient = RestClient.create();
-        String url = "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&hourly=temperature_2m,precipitation,wind_speed_10m&timezone=auto";
         
         try {
-            OpenMeteoResponse response = restClient.get()
-                    .uri(url)
-                    .retrieve()
-                    .body(OpenMeteoResponse.class);
+            OpenMeteoResponse response = weatherApiClient.getCachedResponse();
             
             if (response != null && response.hourly() != null) {
                 model.addAttribute("hourlyTimes", response.hourly().time());
                 model.addAttribute("hourlyTemps", response.hourly().temperature2m());
                 model.addAttribute("hourlyPrecip", response.hourly().precipitation());
                 model.addAttribute("hourlyWind", response.hourly().windSpeed10m());
+            } else {
+                model.addAttribute("error", "Forecast unavailable until the next weather fetch.");
             }
         } catch (Exception e) {
             model.addAttribute("error", "Unable to fetch advance forecast data at the moment.");
@@ -629,19 +627,8 @@ public class DashboardController {
                     .format(DateTimeFormatter.ofPattern("MMM dd, yyyy - hh:mm:ss a"));
         }
 
-        boolean apiConnected = false;
-        String apiResponseMsg = "OK";
-        RestClient restClient = RestClient.create();
-        String testUrl = "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&current=temperature_2m,precipitation,wind_speed_10m&timezone=auto";
-        
-        try {
-            String response = restClient.get().uri(testUrl).retrieve().body(String.class);
-            if (response != null && !response.isEmpty()) {
-                apiConnected = true;
-            }
-        } catch (Exception e) {
-            apiResponseMsg = "Error: " + e.getMessage();
-        }
+        boolean apiConnected = weatherApiClient.getCachedResponse() != null;
+        String apiResponseMsg = weatherApiClient.getLastResult();
 
         model.addAttribute("totalWeatherLogs", totalWeatherLogs);
         model.addAttribute("totalUsers", totalUsers);

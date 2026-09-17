@@ -1,0 +1,95 @@
+package edu.ftnhs.weather_manager.service;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.mockito.Mockito.*;
+
+class WeatherApiClientTests {
+    @ParameterizedTest
+    @CsvSource({
+        "2026-09-16T20:59:59Z,false",
+        "2026-09-16T21:00:00Z,true",
+        "2026-09-17T09:50:00Z,true",
+        "2026-09-17T09:59:59Z,true",
+        "2026-09-17T10:00:00Z,false",
+        "2026-09-17T16:00:00Z,false"
+    })
+    void automaticRequestsRespectManilaWindow(String instant, boolean allowed) {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        WeatherApiClient client = new WeatherApiClient(builder.build(),
+                Clock.fixed(Instant.parse(instant), ZoneOffset.UTC));
+        if (allowed) expectWeather(server);
+        assertEquals(allowed, client.isAutomaticFetchWindow());
+        assertEquals(allowed, client.fetch(false) != null);
+        server.verify();
+    }
+
+    @Test
+    void manualFetchWorksAtNightAndCachedReadsMakeNoRequests() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        WeatherApiClient client = new WeatherApiClient(builder.build(),
+                Clock.fixed(Instant.parse("2026-09-17T12:00:00Z"), ZoneOffset.UTC));
+        expectWeather(server);
+        expectWeather(server);
+        var response = client.fetch(true);
+        assertNotNull(response);
+        assertSame(response, client.getCachedResponse());
+        assertNull(client.fetch(false));
+        assertSame(response, client.getCachedResponse());
+        assertNotNull(client.fetch(true));
+        server.verify();
+    }
+
+    @Test
+    void failedRequestIsThrottledAndCanRetryAfterTenMinutes() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        Clock clock = mock(Clock.class);
+        Instant start = Instant.parse("2026-09-17T00:00:00Z");
+        when(clock.instant()).thenReturn(start);
+        when(clock.withZone(any())).thenAnswer(invocation -> Clock.fixed(clock.instant(), invocation.getArgument(0)));
+        WeatherApiClient client = new WeatherApiClient(builder.build(), clock);
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.open-meteo.com/")))
+                .andRespond(withStatus(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS));
+        expectWeather(server);
+        assertThrows(org.springframework.web.client.HttpClientErrorException.TooManyRequests.class,
+                () -> client.fetch(false));
+        when(clock.instant()).thenReturn(start.plusSeconds(599));
+        assertNull(client.fetch(false));
+        when(clock.instant()).thenReturn(start.plusSeconds(600));
+        assertNotNull(client.fetch(false));
+        server.verify();
+    }
+
+    @Test
+    void repeatedAutomaticTriggersDoNotDuplicateRequests() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        WeatherApiClient client = new WeatherApiClient(builder.build(),
+                Clock.fixed(Instant.parse("2026-09-17T00:00:00Z"), ZoneOffset.UTC));
+        expectWeather(server);
+        assertNotNull(client.fetch(false));
+        assertNull(client.fetch(false));
+        server.verify();
+    }
+
+    private void expectWeather(MockRestServiceServer server) {
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.open-meteo.com/v1/forecast?")))
+                .andRespond(withSuccess("{\"current\":{\"temperature_2m\":28},\"hourly\":{\"time\":[]}}", MediaType.APPLICATION_JSON));
+    }
+}

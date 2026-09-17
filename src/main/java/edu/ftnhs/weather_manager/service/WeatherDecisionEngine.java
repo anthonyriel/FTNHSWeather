@@ -13,7 +13,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -26,7 +25,7 @@ import java.util.Optional;
 public class WeatherDecisionEngine {
 
     private static final Logger log = LoggerFactory.getLogger(WeatherDecisionEngine.class);
-    private final RestClient restClient;
+    private final WeatherApiClient weatherApiClient;
     private final WeatherLogRepository weatherLogRepository;
     private final LearningStatusLogRepository learningStatusLogRepository;
     private final PushNotificationService pushNotificationService;
@@ -35,16 +34,14 @@ public class WeatherDecisionEngine {
     @Value("${weather.cron.enabled:true}")
     private boolean isCronEnabled;
 
-    private static final String WEATHER_API_URL = 
-    "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,pressure_msl,wind_speed_10m,visibility,uv_index,precipitation_probability&hourly=temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m,precipitation_probability&timezone=auto";
-
     public WeatherDecisionEngine(WeatherLogRepository weatherLogRepository, 
                                  LearningStatusLogRepository learningStatusLogRepository,
-                                 PushNotificationService pushNotificationService) {
+                                 PushNotificationService pushNotificationService,
+                                 WeatherApiClient weatherApiClient) {
         this.weatherLogRepository = weatherLogRepository;
         this.learningStatusLogRepository = learningStatusLogRepository;
         this.pushNotificationService = pushNotificationService;
-        this.restClient = RestClient.create();
+        this.weatherApiClient = weatherApiClient;
     }
 
     @PostConstruct
@@ -93,13 +90,21 @@ public class WeatherDecisionEngine {
 
     @Transactional
     public void fetchWeatherAndEvaluateStatus() {
-        log.info("Fetching real-time weather data from Open-Meteo API...");
+        fetchWeatherAndEvaluateStatus(false);
+    }
 
+    @Transactional
+    public void fetchWeatherManually() {
+        fetchWeatherAndEvaluateStatus(true);
+    }
+
+    private void fetchWeatherAndEvaluateStatus(boolean manual) {
         try {
-            OpenMeteoResponse response = restClient.get()
-                    .uri(WEATHER_API_URL)
-                    .retrieve()
-                    .body(OpenMeteoResponse.class);
+            OpenMeteoResponse response = weatherApiClient.fetch(manual);
+            if (response == null) {
+                log.debug("Weather request skipped or unavailable; retaining existing readings.");
+                return;
+            }
 
             if (response != null && response.current() != null) {
                 var cur = response.current();
