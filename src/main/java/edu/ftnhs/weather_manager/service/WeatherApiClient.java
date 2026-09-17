@@ -3,7 +3,9 @@ package edu.ftnhs.weather_manager.service;
 import edu.ftnhs.weather_manager.dto.OpenMeteoResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
+import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -44,7 +46,8 @@ public class WeatherApiClient {
         }
         lastAttempt = now;
         try {
-            OpenMeteoResponse response = restClient.get().uri(URL).retrieve().body(OpenMeteoResponse.class);
+            // URL is already encoded; the String overload would encode the percent sign again.
+            OpenMeteoResponse response = restClient.get().uri(URI.create(URL)).retrieve().body(OpenMeteoResponse.class);
             if (response != null && response.current() != null && response.hourly() != null) {
                 cachedResponse = response;
                 lastResult = "Last request succeeded at " + now.atZone(PH_ZONE) + ".";
@@ -52,10 +55,22 @@ public class WeatherApiClient {
             }
             lastResult = "Last request returned incomplete weather data.";
             return null;
+        } catch (RestClientResponseException e) {
+            String detail = e.getResponseBodyAsString().replaceAll("\\s+", " ").trim();
+            if (detail.length() > 400) detail = detail.substring(0, 400) + "...";
+            lastResult = "Open-Meteo returned HTTP " + e.getStatusCode().value()
+                    + (detail.isEmpty() ? "." : ": " + detail) + cacheStatus();
+            throw e;
         } catch (RuntimeException e) {
-            lastResult = "Last request failed; retaining previously fetched data.";
+            lastResult = "Weather request failed (" + e.getClass().getSimpleName()
+                    + "). Check the server logs for details." + cacheStatus();
             throw e;
         }
+    }
+
+    private String cacheStatus() {
+        return cachedResponse == null ? " No forecast cached since startup."
+                : " Previously fetched forecast retained.";
     }
 
     public OpenMeteoResponse getCachedResponse() {

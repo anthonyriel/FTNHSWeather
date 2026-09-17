@@ -69,6 +69,8 @@ class WeatherApiClientTests {
         expectWeather(server);
         assertThrows(org.springframework.web.client.HttpClientErrorException.TooManyRequests.class,
                 () -> client.fetch(false));
+        assertTrue(client.getLastResult().contains("HTTP 429"));
+        assertTrue(client.getLastResult().contains("No forecast cached since startup"));
         when(clock.instant()).thenReturn(start.plusSeconds(599));
         assertNull(client.fetch(false));
         when(clock.instant()).thenReturn(start.plusSeconds(600));
@@ -90,6 +92,30 @@ class WeatherApiClientTests {
 
     private void expectWeather(MockRestServiceServer server) {
         server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.open-meteo.com/v1/forecast?")))
+                .andExpect(request -> assertEquals("Asia/Manila",
+                        java.net.URLDecoder.decode(org.springframework.web.util.UriComponentsBuilder.fromUri(request.getURI())
+                                .build().getQueryParams().getFirst("timezone"), java.nio.charset.StandardCharsets.UTF_8)))
                 .andRespond(withSuccess("{\"current\":{\"temperature_2m\":28},\"hourly\":{\"time\":[]}}", MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void apiErrorShowsReasonAndRetainsCachedForecast() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        WeatherApiClient client = new WeatherApiClient(builder.build(),
+                Clock.fixed(Instant.parse("2026-09-17T00:00:00Z"), ZoneOffset.UTC));
+        expectWeather(server);
+        server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.open-meteo.com/")))
+                .andRespond(withStatus(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"error\":true,\"reason\":\"Invalid timezone\"}"));
+        var cached = client.fetch(true);
+        assertThrows(org.springframework.web.client.HttpClientErrorException.BadRequest.class,
+                () -> client.fetch(true));
+        assertSame(cached, client.getCachedResponse());
+        assertTrue(client.getLastResult().contains("HTTP 400"));
+        assertTrue(client.getLastResult().contains("Invalid timezone"));
+        assertTrue(client.getLastResult().contains("Previously fetched forecast retained"));
+        server.verify();
     }
 }

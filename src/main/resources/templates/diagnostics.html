@@ -179,9 +179,9 @@
                                 <span class="text-muted">Saved API Data:</span>
                                 <strong th:classappend="${apiConnected ? 'text-success' : 'text-danger'}" th:text="${apiConnected ? 'AVAILABLE' : 'NOT YET AVAILABLE'}">ONLINE</strong>
                             </div>
-                            <div class="d-flex justify-content-between small">
-                                <span class="text-muted">Last Request:</span>
-                                <span class="mono-val text-secondary" th:text="${apiResponseMsg}">OK</span>
+                            <div class="small">
+                                <div class="text-muted mb-1">Last Request:</div>
+                                <div class="text-secondary text-break" th:text="${apiResponseMsg}">OK</div>
                             </div>
                         </div>
                     </div>
