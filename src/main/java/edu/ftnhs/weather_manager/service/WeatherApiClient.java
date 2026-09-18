@@ -7,7 +7,6 @@ import org.springframework.web.client.RestClientResponseException;
 
 import java.net.URI;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -20,7 +19,7 @@ public class WeatherApiClient {
     private final Clock clock;
     private volatile OpenMeteoResponse cachedResponse;
     private volatile String lastResult = "No API request made since startup.";
-    private Instant lastAttempt;
+    private Long lastAttemptSlot;
 
     public WeatherApiClient() {
         this(RestClient.create(), Clock.systemUTC());
@@ -32,19 +31,28 @@ public class WeatherApiClient {
     }
 
     public boolean isAutomaticFetchWindow() {
-        LocalTime time = LocalTime.now(clock.withZone(PH_ZONE));
+        return isAutomaticFetchWindow(clock.instant());
+    }
+
+    private boolean isAutomaticFetchWindow(Instant now) {
+        LocalTime time = now.atZone(PH_ZONE).toLocalTime();
         return !time.isBefore(LocalTime.of(5, 0)) && time.isBefore(LocalTime.of(18, 0));
     }
 
-    // Only the Diagnostics action may bypass the window and request cooldown.
+    // Only the Diagnostics action may bypass the window and per-slot request guard.
     // Return null when skipped so cached observations are not saved as new readings.
     public synchronized OpenMeteoResponse fetch(boolean manual) {
         Instant now = clock.instant();
-        if (!manual && (!isAutomaticFetchWindow()
-                || (lastAttempt != null && Duration.between(lastAttempt, now).compareTo(Duration.ofMinutes(10)) < 0))) {
+        // Manila's UTC+8 offset aligns with these ten-minute boundaries.
+        // A rolling 600-second cooldown skips valid cron runs when delivery times vary.
+        long slot = Math.floorDiv(now.getEpochSecond(), 600);
+        if (!manual && (!isAutomaticFetchWindow(now)
+                || (lastAttemptSlot != null && slot <= lastAttemptSlot))) {
             return null;
         }
-        lastAttempt = now;
+        // Reserve before sending, including failed attempts. Manual requests satisfy
+        // the current slot but must not postpone the next scheduled slot.
+        lastAttemptSlot = lastAttemptSlot == null ? slot : Math.max(lastAttemptSlot, slot);
         try {
             // URL is already encoded; the String overload would encode the percent sign again.
             OpenMeteoResponse response = restClient.get().uri(URI.create(URL)).retrieve().body(OpenMeteoResponse.class);

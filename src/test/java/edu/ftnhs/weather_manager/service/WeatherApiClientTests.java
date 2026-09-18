@@ -18,6 +18,43 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.mockito.Mockito.*;
 
 class WeatherApiClientTests {
+    @Test
+    void delayedTriggersStillFetchInEveryClockSlot() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        Clock clock = mock(Clock.class);
+        when(clock.withZone(any())).thenAnswer(invocation -> Clock.fixed(clock.instant(), invocation.getArgument(0)));
+        WeatherApiClient client = new WeatherApiClient(builder.build(), clock);
+        expectWeather(server);
+        expectWeather(server);
+        expectWeather(server);
+        // 11:00:26, 11:10:14, 11:20:15 Philippine time: cron delivery varies by seconds.
+        for (String time : new String[]{"2026-09-18T03:00:26Z", "2026-09-18T03:10:14Z", "2026-09-18T03:20:15Z"}) {
+            when(clock.instant()).thenReturn(Instant.parse(time));
+            assertNotNull(client.fetch(false), "Missing scheduled slot at " + time);
+            when(clock.instant()).thenReturn(Instant.parse(time).plusSeconds(30));
+            assertNull(client.fetch(false), "Duplicate trigger in the same slot");
+        }
+        server.verify();
+    }
+
+    @Test
+    void manualFetchDoesNotDelayTheNextClockSlot() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        Clock clock = mock(Clock.class);
+        when(clock.withZone(any())).thenAnswer(invocation -> Clock.fixed(clock.instant(), invocation.getArgument(0)));
+        WeatherApiClient client = new WeatherApiClient(builder.build(), clock);
+        expectWeather(server);
+        expectWeather(server);
+        when(clock.instant()).thenReturn(Instant.parse("2026-09-18T03:09:50Z"));
+        assertNotNull(client.fetch(true));
+        assertNull(client.fetch(false));
+        when(clock.instant()).thenReturn(Instant.parse("2026-09-18T03:10:14Z"));
+        assertNotNull(client.fetch(false));
+        server.verify();
+    }
+
     @ParameterizedTest
     @CsvSource({
         "2026-09-16T20:59:59Z,false",
