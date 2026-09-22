@@ -2,7 +2,9 @@
 
 The cron expression remains `0 0/10 * * * ?` in `Asia/Manila`.
 Automatic Open-Meteo requests are permitted from 05:00 inclusive to 18:00
-exclusive Philippine Standard Time (UTC+8). A normal uninterrupted schedule
+exclusive Philippine Standard Time (UTC+8). Each request contains nine weather
+variables (six current and three hourly), keeping it below Open-Meteo's
+multi-call threshold. A normal uninterrupted schedule
 therefore makes 78 requests per day, ending at 17:50, instead of 144.
 
 Startup checks and `/api/health` use the same restriction. Each clock-aligned

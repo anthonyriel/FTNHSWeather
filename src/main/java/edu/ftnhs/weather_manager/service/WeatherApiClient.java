@@ -14,7 +14,9 @@ import java.time.ZoneId;
 @Service
 public class WeatherApiClient {
     private static final ZoneId PH_ZONE = ZoneId.of("Asia/Manila");
-    private static final String URL = "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,pressure_msl,wind_speed_10m,visibility,uv_index,precipitation_probability&hourly=temperature_2m,precipitation,wind_speed_10m,relative_humidity_2m,precipitation_probability&timezone=Asia%2FManila";
+    // Keep the request below ten total weather variables to avoid multi-call billing.
+    // These are the fields used by the dashboard, forecast charts, and decision engine.
+    private static final String URL = "https://api.open-meteo.com/v1/forecast?latitude=9.876977&longitude=123.90734&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,cloud_cover,wind_speed_10m&hourly=temperature_2m,precipitation,wind_speed_10m&timezone=Asia%2FManila";
     private final RestClient restClient;
     private final Clock clock;
     private volatile OpenMeteoResponse cachedResponse;

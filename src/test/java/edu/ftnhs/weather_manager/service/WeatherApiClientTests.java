@@ -129,6 +129,12 @@ class WeatherApiClientTests {
 
     private void expectWeather(MockRestServiceServer server) {
         server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://api.open-meteo.com/v1/forecast?")))
+                .andExpect(request -> {
+                    var params = org.springframework.web.util.UriComponentsBuilder.fromUri(request.getURI())
+                            .build().getQueryParams();
+                    assertEquals(6, params.getFirst("current").split(",").length);
+                    assertEquals(3, params.getFirst("hourly").split(",").length);
+                })
                 .andExpect(request -> assertEquals("Asia/Manila",
                         java.net.URLDecoder.decode(org.springframework.web.util.UriComponentsBuilder.fromUri(request.getURI())
                                 .build().getQueryParams().getFirst("timezone"), java.nio.charset.StandardCharsets.UTF_8)))
